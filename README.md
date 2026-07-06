@@ -1,6 +1,20 @@
+<p align="center">
+  <img src="docs/bergman_lab_logo.png" alt="Bergman Lab logo" width="240"/>
+</p>
+
 # MCCP_Enzymes
 
 Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes four desktop apps for interactive runs, parameter search, and batch campaigns, plus optional command-line tools for batch runs and re-screening.
+
+## About the Bergman Lab
+
+This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
+
+It implements the in silico chemostat evolution model used in *No Trade-Offs Required: Cross-Feeding From Survival Alone* (Samuel Rosean & Aviv Bergman).
+
+**Correspondence:** Aviv Bergman — [aviv@einsteinmed.edu](mailto:aviv@einsteinmed.edu)
+
+Aviv Bergman is also affiliated with the Santa Fe Institute, Santa Fe, NM 87501, USA.
 
 ## Requirements
 
@@ -193,4 +207,5 @@ Re-screen outputs are written inside that session folder under `Re-Runs/` or `Re
 - `headless/primary_batch_campaign.py` — command-line batch campaigns
 - `headless/primary_hit_rescreen.py` — command-line re-screening
 - `simulation/` — simulation engine used by the apps above
+- `docs/bergman_lab_logo.png` — Bergman Lab logo
 - `docs/screenshots/` — GUI screenshots referenced above
