@@ -47,9 +47,9 @@ Run one chemostat simulation at a time, inspect trajectories, and compute metric
 
 ### Layout
 
-- **Left column** — simulation parameters, toggles (diffusion, chemostat flow, death/duplication modes, traits), and **Run Simulation**.
-- **Center** — live plots: trait heatmaps, population size, energy, metabolite flux, deaths/duplications per generation, and optional M1/M2 environment panels.
-- **Right column** — metric selector, **Run** (evaluate the chosen metric on the last run), optional **Sweep Seeds** (repeat the same settings with different seeds), and a pathway diagram that reflects your toggles.
+- **Left column** — simulation parameters, toggles (diffusion, chemostat flow, death/duplication modes, traits), **Run Simulation**, and status/progress.
+- **Center column** — tabbed plots. **Main Plots** shows trait heatmaps, population size, mean energy, metabolite flux, and deaths/duplications per generation. Other tabs add **M1 Metabolite**, **M2 Metabolite**, **Budgets**, and **Budget 2** detail views. The rightmost tab, **Metrics**, holds the metric selector, **Run** (score the last simulation), optional **Sweep Seeds** (repeat the same settings with different seeds), and seed-sweep output.
+- **Right column** — diagnostic figures: death and duplication probability curves vs energy, the investment-function plot, and a **Simulation Pathway Diagram** that updates with your toggles.
 
 ### Typical workflow
 
@@ -57,8 +57,8 @@ Run one chemostat simulation at a time, inspect trajectories, and compute metric
 2. Choose transport and life-cycle toggles (e.g. pooled vs diffusion-limited nutrients, binary vs constant death).
 3. Optionally enter a **Random Seed** for reproducibility (leave blank for a random seed each run).
 4. Click **Run Simulation** and wait for the progress bar to finish.
-5. Read plots in the center panel; hover tooltips on labels explain individual knobs.
-6. Pick a **Metric** on the right and click **Run** to score the finished run (e.g. task specialization, trait diversity).
+5. Browse the center tabs (**Main Plots** first, then M1/M2 or budget tabs as needed). Hover tooltips on labels explain individual knobs.
+6. Open the **Metrics** tab, pick a metric, and click **Run** to score the finished run (e.g. task specialization, trait diversity).
 
 Use this app to build intuition for a parameter set before scaling up to batch or optimization workflows.
 
