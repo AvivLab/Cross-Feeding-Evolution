@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/bergman_lab_logo.png" alt="Bergman Lab logo" width="240"/>
+  <img src="docs/bergman_lab_logo.png" alt="Bergman Lab logo" width="480"/>
 </p>
 
 # MCCP_Enzymes
