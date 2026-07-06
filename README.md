@@ -1,6 +1,6 @@
 # MCCP_Enzymes
 
-Simulate enzyme evolution in a chemostat using the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes desktop apps for interactive runs and batch campaigns, plus optional command-line tools for batch runs and re-screening.
+Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes desktop apps for interactive runs and batch campaigns, plus optional command-line tools for batch runs and re-screening.
 
 ## Requirements
 
