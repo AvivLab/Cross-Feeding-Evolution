@@ -1,0 +1,10 @@
+% Standalone wrapper for one chemostat snapshot PDF. Do not \input from the paper.
+% Build all variants with scripts/build_chemostat_snapshot_pdfs.sh.
+\documentclass[border=0pt]{standalone}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, shapes.geometric, shadings, intersections}
+\begin{document}
+\input{chemostat_snapshot_tikz.tex}
+\input{chemostat_snap_export_body.tex}
+\end{document}

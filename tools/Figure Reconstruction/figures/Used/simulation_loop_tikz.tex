@@ -1,0 +1,149 @@
+% One-generation flow (homogeneous-pool regime used in these sweeps).
+\def\SimLoopColW{5.45cm}
+\def\SimLoopGap{1.05cm}
+\def\SimLoopSpan{11.95cm} % 2 * \SimLoopColW + \SimLoopGap
+\def\SimLoopRow{0.58cm}
+\def\SimLoopInitGap{1.0cm}
+\def\SimLoopOutcomeGap{1.5cm}
+\def\SimLoopOutcomeWide{6.85cm}
+\def\SimLoopCollapseNarrow{4.25cm}
+
+\begin{tikzpicture}[
+  font=\small,
+  >=Stealth,
+  proc/.style={
+    draw=blue!70!black, fill=blue!10, rounded corners=3pt,
+    align=center, text width=\SimLoopColW, minimum width=\SimLoopColW,
+    minimum height=0.68cm, inner sep=3pt},
+  init/.style={
+    draw=teal!70!black, fill=teal!10, rounded corners=3pt,
+    align=center, text width=\SimLoopSpan, minimum width=\SimLoopSpan,
+    minimum height=0.68cm, inner sep=3pt},
+  check/.style={
+    draw=yellow!60!black, fill=yellow!18, rounded corners=3pt,
+    align=center, text width=\SimLoopSpan, minimum width=\SimLoopSpan,
+    minimum height=0.68cm, inner sep=3pt},
+  outcome/.style={
+    draw=teal!70!black, fill=teal!10, rounded corners=3pt,
+    align=center, minimum height=0.68cm, inner sep=3pt},
+  stop/.style={
+    draw=gray!60, fill=gray!8, rounded corners=3pt,
+    align=center, font=\footnotesize, minimum height=0.68cm, inner sep=3pt},
+  looplabel/.style={
+    draw=gray!55, fill=white, rounded corners=2pt,
+    align=center, font=\scriptsize, inner sep=3pt},
+  loopbox/.style={
+    draw=blue!40!black, rounded corners=5pt, inner sep=8pt},
+  orth/.style={->, thick},
+]
+
+\node[init] (init) {%
+  \textbf{Initialize Run:} homogeneous genotype $A_0$ with $B_0{=}1{-}A_0$; start population $N_0{=}100$;\\
+  fix sampled parameters};
+
+\coordinate (L) at ($(init.south west)+(0.5*\SimLoopColW,0)$);
+\coordinate (R) at ($(init.south east)+(-0.5*\SimLoopColW,0)$);
+
+\begin{scope}[local bounding box=loopcontent]
+  \node[proc, anchor=north] (inflow) at ($(L)+(0,-\SimLoopInitGap)$) {%
+    \textbf{1. Resource Inflow}\\
+    Add fresh $M_1$ to the well-mixed environment pool};
+
+  \node[proc, anchor=north] (taskA) at ($(R)+(0,-\SimLoopInitGap)$) {%
+    \textbf{2. Task~A}\\
+    Convert $M_1 \rightarrow M_2$; task done by organisms according to their $A_i$};
+
+  \path let \p1=(inflow.south), \p2=(taskA.south) in
+    coordinate (rowonebot) at (0, {min(\y1,\y2)});
+
+  \node[proc, anchor=north] (energy) at ($(L |- rowonebot)+(0,-\SimLoopRow)$) {%
+    \textbf{4. Energy Accounting}\\
+    Credit Task~A and Task~B yields to $E_i^{(g-1)}$, then deduct maintenance $c_{\mathrm{m}}$:\\
+    $E_i^{(g)} \leftarrow E_i^{(g-1)} + \mathcal{A}_i + Y\cdot\mathcal{B}_i - c_{\mathrm{m}}$};
+
+  \node[proc, anchor=north] (taskB) at ($(R |- rowonebot)+(0,-\SimLoopRow)$) {%
+    \textbf{3. Task~B}\\
+    Convert $M_2 \rightarrow$ waste; task done by organisms according to their $B_i$};
+
+  \path let \p1=(energy.south), \p2=(taskB.south) in
+    coordinate (rowtwobot) at (0, {min(\y1,\y2)});
+
+  \node[proc, anchor=north] (death) at ($(L |- rowtwobot)+(0,-\SimLoopRow)$) {%
+    \textbf{5. Death}\\
+    Draw $P_{\mathrm{death},i}(E_i)$ for each organism; remove dead organisms};
+
+  \node[proc, anchor=north] (dup) at ($(R |- rowtwobot)+(0,-\SimLoopRow)$) {%
+    \textbf{6. Duplication}\\
+    Draw $P_{\mathrm{dup.},i}(E_i)$ for each organism; split energy between parent and offspring;\\
+    offspring receives a copy of the parent's traits ($A_i$, $B_i$)};
+
+  \path let \p1=(death.south), \p2=(dup.south) in
+    coordinate (rowthreebot) at (0, {min(\y1,\y2)});
+
+  \node[proc, anchor=north] (flow) at ($(L |- rowthreebot)+(0,-\SimLoopRow)$) {%
+    \textbf{8. Chemostat Flow}\\
+    Draw $P(\mathrm{outflow}_i)$ for each survivor; remove organisms and\\
+    scale environmental $M_1$ \& $M_2$ by $(1-\phi)$};
+
+  \node[proc, anchor=north] (mutate) at ($(R |- rowthreebot)+(0,-\SimLoopRow)$) {%
+    \textbf{7. Trait Mutation}\\
+    With probability $\mu_{\mathrm{m}}$, modify offspring traits within $\pm\sigma_{\mathrm{m}}$\\
+    of the parental value; see Supplementary Methods};
+
+  \coordinate (linkA) at (inflow.east |- taskA.west);
+  \coordinate (link34) at (taskB.west |- energy.east);
+  \coordinate (link56) at (death.east |- dup.west);
+  \coordinate (link78) at (mutate.west |- flow.east);
+  \draw[orth] (linkA) -- (taskA.west);
+  \draw[orth] (taskA.south) -- (taskB.north);
+  \draw[orth] (link34) -- (energy.east);
+  \draw[orth] (energy.south) -- (death.north);
+  \draw[orth] (link56) -- (dup.west);
+  \draw[orth] (dup.south) -- (mutate.north);
+  \draw[orth] (link78) -- (flow.east);
+\end{scope}
+
+\node[loopbox, fit=(loopcontent)] (loopframe) {};
+\node[font=\footnotesize\bfseries, anchor=south east, inner sep=2pt] (genlabel)
+  at ($(loopframe.north east)+(0,0.20cm)$) {For each generation~-- $g = 1,\ldots,1000$};
+
+\node[check, below=0.5cm of loopframe.south] (check) {%
+  \textbf{9. End of Generation}};
+
+\coordinate (outrow) at ($(check.south)+(0,-\SimLoopOutcomeGap)$);
+
+\node[outcome, anchor=north west, text width=\SimLoopOutcomeWide,
+  minimum width=\SimLoopOutcomeWide] (analyze) at ($(init.south west |- outrow)$) {%
+  \textbf{10. Cross-Feeding Outcome Analysis}\\
+  Evaluate final population for Persistence, Specialization, and Exchange (Methods);\\
+  record hit or non-hit for this parameter draw};
+
+\node[stop, anchor=north east, text width=\SimLoopCollapseNarrow,
+  minimum width=\SimLoopCollapseNarrow] (stoprun) at ($(init.south east |- outrow)$) {%
+  \textbf{Run Ends (Collapsed)}\\
+  Population extinct before generation 1000; no outcome scoring};
+
+\coordinate (loopback) at ($(check.west)+(-1.45cm,0)$);
+\coordinate (loopup) at (loopback |- inflow.west);
+
+\coordinate (initabove) at ($(inflow.north)+(0,0.45cm)$);
+\draw[orth] (init.south) |- (initabove) -- (inflow.north);
+\coordinate (flowdown) at ($(flow.south)+(0,-0.5cm)$);
+\draw[orth] (flow.south) -- (flowdown) -| (check.north);
+\coordinate (checkL) at ($(analyze.north |- check.south)$);
+\coordinate (checkR) at ($(stoprun.north |- check.south)$);
+\draw[orth] (checkL) -- node[midway, looplabel] {$g = 1000$,\\$N_g > 0$} (analyze.north);
+\draw[orth] (checkR) -- node[midway, looplabel] {$N_g = 0$} (stoprun.north);
+\draw[orth] (check.west) -- (loopback)
+  -- node[midway, looplabel] {$g < 1000$,\\$N_g > 0$} (loopup)
+  -- (inflow.west);
+
+\coordinate (bboxSouth) at ($(stoprun.south)+(0,-0.45cm)$);
+
+\pgfresetboundingbox
+\useasboundingbox
+  ([xshift=-1.65cm]init.west |- genlabel.north)
+  rectangle
+  ([xshift=1.65cm]init.east |- bboxSouth);
+
+\end{tikzpicture}

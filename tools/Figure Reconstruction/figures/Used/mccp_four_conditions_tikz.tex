@@ -1,0 +1,201 @@
+% Four configurations: neutral chemostat baseline + three selection regimes.
+% 2x2 panel grid; horizontal legend below; headers sit directly above each plot.
+\begin{tikzpicture}[font=\small, >=Stealth]
+
+\newlength{\mccpcondplotw}
+\newlength{\mccpcondploth}
+\newlength{\mccpcondcolgap}
+\newlength{\mccpcondcolB}
+\newlength{\mccpcondheadsep}
+\newlength{\mccpcondheaderh}
+\newlength{\mccpcondrowsep}
+\newlength{\mccpcondrowpitch}
+\newlength{\mccpcondheadtextw}
+\newlength{\mccpcondlabelpad}
+\newlength{\mccpcondlabelh}
+\newlength{\mccpcondlegendband}
+\newlength{\mccpcondlegendgap}
+\newlength{\mccpcondxlabelhang}
+\newlength{\mccpcondbottombase}
+\newlength{\mccpcondheaderabove}
+
+% Compact 2x2 panel grid; horizontal legend below; headers sit directly above each plot.
+\setlength{\mccpcondcolgap}{0.03\textwidth}
+\setlength{\mccpcondplotw}{0.38\textwidth}
+\setlength{\mccpcondploth}{3.25cm}
+\setlength{\mccpcondcolB}{\dimexpr\mccpcondplotw+\mccpcondcolgap\relax}
+\setlength{\mccpcondlegendband}{0.46cm}
+\setlength{\mccpcondlegendgap}{0.32cm}
+\setlength{\mccpcondxlabelhang}{0.50cm}
+\setlength{\mccpcondbottombase}{\dimexpr\mccpcondlegendband+\mccpcondlegendgap\relax}
+\setlength{\mccpcondheadsep}{0.06cm} % gap between subtitle and plot top
+\setlength{\mccpcondheaderh}{0.42cm} % title + subtitle band (was too tight at 0.28cm)
+\setlength{\mccpcondlabelpad}{0.01cm}
+\setlength{\mccpcondlabelh}{0.14cm}
+\setlength{\mccpcondrowsep}{-0.60cm} % vertical gap between rows (more negative = tighter; plots unchanged)
+\setlength{\mccpcondheaderabove}{\dimexpr\mccpcondheadsep+\mccpcondheaderh+\mccpcondlabelpad+\mccpcondlabelh\relax}
+\setlength{\mccpcondrowpitch}{%
+  \dimexpr\mccpcondxlabelhang+\mccpcondploth+\mccpcondheaderabove+\mccpcondrowsep\relax}
+\setlength{\mccpcondheadtextw}{\dimexpr\mccpcondplotw-0.04cm\relax}
+
+\newlength{\mccpcondgridw}
+\newlength{\mccpcondxshift}
+\setlength{\mccpcondgridw}{\dimexpr\mccpcondplotw+\mccpcondcolgap+\mccpcondplotw\relax}
+\setlength{\mccpcondxshift}{0.5\textwidth}
+\addtolength{\mccpcondxshift}{-0.5\mccpcondgridw}
+
+\pgfplotsset{
+  mccp cond combined/.style={
+    width=\mccpcondplotw,
+    height=\mccpcondploth,
+    xmin=-1, xmax=5,
+    ymin=0, ymax=1.12,
+    ytick={0,0.2,0.4,0.6,0.8,1},
+    xlabel={$E_i$},
+    xlabel style={font=\scriptsize, yshift=0pt},
+    ylabel={Probability},
+    ylabel style={font=\scriptsize},
+    tick label style={font=\scriptsize},
+    grid=major,
+    grid style={gray!20},
+    clip=false,
+  },
+  mccp death/.style={orange!85!black, thick, const plot, mark=none},
+  mccp dup ref/.style={blue!55!black, thick, const plot, mark=none},
+  mccp dup primary/.style={blue!70!black, thick, const plot, mark=none},
+  mccp dup coupled/.style={blue!60!black, thick, const plot, mark=none},
+  mccp outflow/.style={gray!55!black, thick, dashed, const plot, mark=none},
+}
+
+\def\mccpcondphi{0.2}
+\def\mccpconddupflow{0.25} % phi/(1-phi) at phi=0.2
+\newcommand{\mccpcondaddoutflow}{%
+  \addplot[mccp outflow]
+    coordinates {(-1,\mccpcondphi) (5,\mccpcondphi)};
+}
+
+% Per-panel local bbox gives each subplot's own left edge (incl.\ ylabel).
+\newcommand{\mccpcondpaneldecor}[1]{%
+  \coordinate (mccpplotleft) at (mccppanel.south west);
+  \node[
+    anchor=south west,
+    inner sep=0pt,
+    outer sep=0pt,
+  ] (mccpcondheader) at ([yshift=\mccpcondheadsep]#1.north west) {%
+    \parbox[t][\mccpcondheaderh][b]{\mccpcondheadtextw}{%
+      {\footnotesize\bfseries \mccpcondtitle}\\[0.02em]
+      {\scriptsize \mccpcondsubtitle}%
+    }%
+  };
+  \node[
+    anchor=south west,
+    font=\footnotesize\bfseries,
+    inner sep=0pt,
+    outer sep=0pt,
+  ] at ([yshift=\mccpcondlabelpad]mccpplotleft |- mccpcondheader.north) {(\mccpcondletter)};
+}
+
+\begin{scope}[shift={(\mccpcondxshift,0)}]
+
+% --- (a) Neutral ---
+\begin{scope}[local bounding box=mccppanel, shift={(0,\dimexpr\mccpcondbottombase+\mccpcondrowpitch\relax)}]
+  \begin{axis}[
+    mccp cond combined,
+    name=axA,
+    at={(0,\mccpcondxlabelhang)}, anchor=south west,
+  ]
+    \addplot[mccp death]
+      coordinates {(-1,0) (5,0)};
+    \addplot[mccp dup coupled]
+      coordinates {(-1,\mccpconddupflow) (5,\mccpconddupflow)};
+    \mccpcondaddoutflow
+  \end{axis}
+  \def\mccpcondletter{a}%
+  \def\mccpcondtitle{Neutral}%
+  \def\mccpcondsubtitle{No Death; Flow-Balanced Duplication}%
+  \mccpcondpaneldecor{axA}
+\end{scope}
+
+% --- (b) Death Selection ---
+\begin{scope}[local bounding box=mccppanel, shift={(\mccpcondcolB,\dimexpr\mccpcondbottombase+\mccpcondrowpitch\relax)}]
+  \begin{axis}[
+    mccp cond combined,
+    name=axB,
+    at={(0,\mccpcondxlabelhang)}, anchor=south west,
+  ]
+    \addplot[mccp death]
+      coordinates {(-1,1) (0,1)};
+    \addplot[orange!85!black, thick, domain=0:5, samples=120, forget plot]
+      {exp(-2*x)};
+    \addplot[mccp dup ref]
+      coordinates {(-1,0.3) (5,0.3)};
+    \mccpcondaddoutflow
+  \end{axis}
+  \def\mccpcondletter{b}%
+  \def\mccpcondtitle{Death Selection}%
+  \def\mccpcondsubtitle{eq.\ (4); Constant Duplication}%
+  \mccpcondpaneldecor{axB}
+\end{scope}
+
+% --- (c) Duplication Selection ---
+\begin{scope}[local bounding box=mccppanel, shift={(0,\mccpcondbottombase)}]
+  \begin{axis}[
+    mccp cond combined,
+    name=axC,
+    at={(0,\mccpcondxlabelhang)}, anchor=south west,
+  ]
+    \addplot[mccp death]
+      coordinates {(-1,0) (5,0)};
+    \addplot[mccp dup primary]
+      coordinates {(-1,0) (0,0) (0,{1/(1+exp(12.5))})};
+    \addplot[blue!70!black, thick, domain=0:5, samples=120, forget plot]
+      {1/(1+exp(-5*(x-2.5)))};
+    \mccpcondaddoutflow
+  \end{axis}
+  \def\mccpcondletter{c}%
+  \def\mccpcondtitle{Duplication Selection}%
+  \def\mccpcondsubtitle{No Death; eq.\ (5)}%
+  \mccpcondpaneldecor{axC}
+\end{scope}
+
+% --- (d) Death and Duplication Selection ---
+\begin{scope}[local bounding box=mccppanel, shift={(\mccpcondcolB,\mccpcondbottombase)}]
+  \begin{axis}[
+    mccp cond combined,
+    name=axD,
+    at={(0,\mccpcondxlabelhang)}, anchor=south west,
+  ]
+    \addplot[mccp death]
+      coordinates {(-1,1) (0,1)};
+    \addplot[orange!85!black, thick, domain=0:5, samples=120, forget plot]
+      {exp(-2*x)};
+    \addplot[mccp dup primary]
+      coordinates {(-1,0) (0,0) (0,{1/(1+exp(12.5))})};
+    \addplot[blue!70!black, thick, domain=0:5, samples=120, forget plot]
+      {1/(1+exp(-5*(x-2.5)))};
+    \mccpcondaddoutflow
+  \end{axis}
+  \def\mccpcondletter{d}%
+  \def\mccpcondtitle{Death and Duplication Selection}%
+  \def\mccpcondsubtitle{eq.\ (4), (5)}%
+  \mccpcondpaneldecor{axD}
+\end{scope}
+
+% --- Horizontal legend (centered under full figure, including y-axis labels) ---
+\node[fit=(axA)(axB)(axC)(axD), inner sep=0pt] (mccpfigbox) {};
+\path (mccpfigbox.south west |- 0,0.35\mccpcondlegendband)
+  -- node[pos=0.5, anchor=center, font=\scriptsize, inner sep=0pt] {%
+  \tikz[baseline=-0.5ex]{\draw[orange!85!black, line width=0.9pt] (0,0) -- (0.40cm,0);}%
+  \ $P(\mathrm{death})$\quad
+  \tikz[baseline=-0.5ex]{\draw[blue!65!black, line width=0.9pt] (0,0) -- (0.40cm,0);}%
+  \ $P(\mathrm{dup.})$\quad
+  \tikz[baseline=-0.5ex]{\draw[gray!55!black, line width=0.9pt, dashed] (0,0) -- (0.40cm,0);}%
+  \ $P(\mathrm{outflow})$\ $(\phi=0.2)$%
+} (mccpfigbox.south east |- 0,0.35\mccpcondlegendband);
+
+% Reserve a little ink above panel headers (avoids tight pdfcrop clipping).
+\path ([yshift=0.10cm]current bounding box.north east);
+
+\end{scope}
+
+\end{tikzpicture}

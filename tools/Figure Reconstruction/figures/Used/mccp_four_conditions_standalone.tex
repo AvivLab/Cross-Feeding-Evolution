@@ -1,0 +1,12 @@
+% Standalone wrapper for Fig.~2 (four configuration panels). Do not \input from the paper;
+% run scripts/build_mccp_four_conditions_figure.sh and include figures/Used/mccp_four_conditions.pdf.
+\documentclass[border=0pt]{standalone}
+\usepackage{amsmath,amssymb}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, shapes.geometric, shadings, intersections, matrix}
+\begin{document}
+\setlength{\textwidth}{6.0in}
+\input{mccp_four_conditions_tikz.tex}
+\end{document}

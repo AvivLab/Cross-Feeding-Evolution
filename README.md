@@ -4,7 +4,7 @@
 
 # MCCP_Enzymes
 
-Simulate microbial evolution of a single population in a chemostat to investigate the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes four desktop apps for interactive runs, parameter search, and batch campaigns, plus optional command-line tools for batch runs and re-screening.
+Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes four desktop apps for interactive runs, parameter search, and batch campaigns, plus optional command-line tools for batch runs and re-screening.
 
 ## About
 
@@ -46,6 +46,47 @@ Aviv Bergman is also affiliated with the Santa Fe Institute, Santa Fe, NM 87501,
    ```
 
 Choose one of the four tools from the launcher window.
+
+## Recreating the paper results
+
+The paper compares four selection regimes (Neutral, Death Selection, Duplication Selection, and Death and Duplication Selection) across fixed task-energy yield ratios.
+
+**All Batch Runner JSON settings used in the paper are included in the `settings/` folder** — one file per suite and configuration (e.g. `settings/Fixed_3_ratio/c_justDeath_Fixed_3.json`). See `settings/README.md` for the full list of suites and config names.
+
+You can reproduce the workflow with two apps:
+
+1. **Batch Runner** — Open a JSON from `settings/` via **Load JSON Settings…**, choose a save folder, and run the campaign. Each file runs 100 batches of 1000 simulations with the paper’s metric filters and parameter bounds. Session output includes hit counts and the parameter vectors that hit.
+
+2. **Batch Re-Runner** — Load a finished Batch Runner session and **re-screen hits** (and optionally non-hits) with fresh random seeds. The paper used 20 re-screen seeds per hit to estimate how often the same parameter set passes again. Results are written under `Re-Runs/` inside the session folder.
+
+Repeat steps 1–2 for each JSON in `settings/` that you need (seven fixed yield-ratio suites × four configurations). Large campaigns are long-running; the same JSON files work with the headless batch runner on a cluster (see `settings/README.md` and *Batch campaigns from the terminal* below). Once you have primary batches and re-screens, the figure scripts below can turn those outputs into plots.
+
+## Reconstructing paper figures
+
+Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the manuscript schematics (TikZ) and data plots (Fig. 3 and supplementary panels) from a single table, `batch_hit_counts.csv`.
+
+**Typical workflow:**
+
+1. Complete Batch Runner campaigns and Batch Re-Runner re-screens for the configurations you need (see above).
+2. Assemble the combined CSV from your session folders:
+
+   ```bash
+   cd "tools/Figure Reconstruction"
+   export PYTHONPATH="scripts${PYTHONPATH:+:$PYTHONPATH}"
+   python3 scripts/assemble_figure_data.py
+   ```
+
+   This writes `data/figure_reproduction/batch_hit_counts.csv`. (The CSV is not shipped with this download because it is very large.)
+
+3. Rebuild figures:
+
+   ```bash
+   ./rebuild_all_figures.sh
+   ```
+
+   Outputs appear under `output/`. TikZ schematic PDFs are also written under `figures/Used/`.
+
+**Requirements for figures:** Python packages from `requirements.txt`, plus **pdfLaTeX**, **latexmk**, and **pdfcrop** for the TikZ schematics. Some supplementary plots (events scatter, parameter embedding) need raw `Re-Runs/sessions` data rather than the CSV alone — see `tools/Figure Reconstruction/README.md` for individual script options.
 
 ---
 
@@ -205,6 +246,8 @@ Re-screen outputs are written inside that session folder under `Re-Runs/` or `Re
 - `headless/primary_batch_campaign.py` — command-line batch campaigns
 - `headless/primary_hit_rescreen.py` — command-line re-screening
 - `simulation/` — simulation engine used by the apps above
+- `settings/` — paper Batch Runner JSON settings (suites × four configurations)
+- `tools/Figure Reconstruction/` — scripts to regenerate paper figures (see its README)
 - `docs/bergman_lab_logo.png` — Bergman Lab logo
 - `docs/screenshots/` — GUI screenshots referenced above
 

@@ -1,0 +1,112 @@
+{
+  "kind": "primary_batch_campaign",
+  "version": 1,
+  "n_runs": 1000,
+  "n_primary_batches": 100,
+  "base_seed": 1,
+  "metric_filters": [
+    {
+      "label": "A",
+      "active": true,
+      "metric": "Task Specialization Index (|share-0.5|)",
+      "operator": ">",
+      "threshold": 0.3
+    },
+    {
+      "label": "B",
+      "active": true,
+      "metric": "Final Population Size",
+      "operator": ">",
+      "threshold": 50.0
+    },
+    {
+      "label": "C",
+      "active": true,
+      "metric": "Exchanged M2 Percent (neutral perc.)",
+      "operator": ">",
+      "threshold": 95.0
+    },
+    {
+      "label": "D",
+      "active": false,
+      "metric": null,
+      "operator": null,
+      "threshold": null
+    }
+  ],
+  "primary_bounds": {
+    "Cost of Life": [
+      0.001,
+      0.05
+    ],
+    "Death Decay Rate": [
+      0.1,
+      20.0
+    ],
+    "Duplication Sigmoid Intensity": [
+      0,
+      10
+    ],
+    "Duplication Sigmoid Midpoint": [
+      0,
+      5
+    ],
+    "Flow Percentage": [
+      0,
+      50
+    ],
+    "Initial A": [
+      0,
+      1
+    ],
+    "Initial Energy": [
+      0,
+      20
+    ],
+    "Mutation Rate": [
+      0,
+      0.005
+    ],
+    "Mutation Scale": [
+      0,
+      1
+    ]
+  },
+  "primary_numeric_parameters": {
+    "Average In_Flow": 100.0,
+    "Cost of Transport": 0.0,
+    "Initial Organism Count": 100.0,
+    "Investment Modifier": 1.0,
+    "Number of Generations": 1000.0,
+    "Acetate Ratio": 20.0
+  },
+  "primary_toggles": {
+    "Homogeneous Population": true,
+    "Independent Traits": false,
+    "Enable Initial Energy": true,
+    "Enable Chemostat Flow": true,
+    "Enable Intermediate Costs": false,
+    "Enable Acetate Addition": false,
+    "Enable M1 Diffusion": false,
+    "Enable M2 Diffusion": false,
+    "Enable M1 Facilitated Diffusion": false,
+    "Enable M1 Porin Diffusion": false,
+    "Enable Diffusion Mutation": false,
+    "Homogeneous Initial Diffusion Const.": false,
+    "Enable LoF on A": false,
+    "Enable LoF on B": false,
+    "Enable LoF on T": false,
+    "Downward Only Mutation": false,
+    "Constant Death Probability": false,
+    "Constant Duplication Probability": false
+  },
+  "model": {
+    "key": "simulation",
+    "label": "Simulation"
+  },
+  "_export_meta": {
+    "source_folder": "/Users/samuelrosean/Documents/Albert_Einstein/Aviv_PHD/GIT/MCCP_Enzymes",
+    "session_id": "20260421-122154",
+    "note": "Primary: death decay and sigmoid duplication in bounds."
+  }
+}
