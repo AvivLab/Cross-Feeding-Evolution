@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble data/figure_reproduction/batch_hit_counts.csv for all SecondPaperDraft figure plots."""
+"""Assemble data/figure_reproduction/batch_hit_counts.csv for paper figure plots."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from typing import Dict, FrozenSet, Iterable, Iterator, Sequence
 
-from plot_hit_mutation_scale_violin_supplementary import ALL_CONFIG_KEYS, PARAM_SPECS
+from figure_param_specs import ALL_CONFIG_KEYS, PARAM_SPECS
 from plot_hit_rescreen_panel import (
     N_SIMS_PER_BATCH,
     parse_rescreen_session_dir,
@@ -265,7 +265,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "--data-dir",
         type=Path,
         default=data_dir,
-        help="Output directory (default: SecondPaperDraft/data/figure_reproduction)",
+        help="Output directory (default: data/figure_reproduction under this folder)",
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
 

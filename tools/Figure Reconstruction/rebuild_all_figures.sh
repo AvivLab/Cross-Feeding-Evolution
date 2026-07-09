@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate manuscript and supplementary figures from batch_hit_counts.csv + TikZ sources.
+# Regenerate all figures in the main manuscript and Supplementary Information PDFs.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS="$ROOT/scripts"
@@ -9,11 +9,11 @@ export PYTHONPATH="$SCRIPTS${PYTHONPATH:+:$PYTHONPATH}"
 
 if [[ ! -f "$DATA_CSV" ]]; then
   echo "Missing $DATA_CSV" >&2
-  echo "Obtain batch_hit_counts.csv or run: python3 scripts/assemble_figure_data.py" >&2
+  echo "Run: python3 scripts/assemble_figure_data.py" >&2
   exit 1
 fi
 
-mkdir -p "$OUT/figures" "$OUT/figures/Used" "$OUT/figures/Extra" "$OUT/supplementary/figures"
+mkdir -p "$OUT/figures" "$OUT/supplementary/figures"
 
 echo "== TikZ figures =="
 "$SCRIPTS/build_mccp_chain_figure.sh"
@@ -30,14 +30,5 @@ python3 "$SCRIPTS/plot_figure3_panels.py" \
 python3 "$SCRIPTS/plot_rescreen_ridgeline_supplementary.py" \
   --data-csv "$DATA_CSV" \
   --output "$OUT/supplementary/figures/supplementary_rescreen_ridgelines.png"
-python3 "$SCRIPTS/plot_non_hit_ridgeline_supplementary.py" \
-  --data-csv "$DATA_CSV" \
-  --output "$OUT/supplementary/figures/supplementary_non_hit_rescreen_ridgelines.png"
 
 echo "Done. Figures under $OUT"
-echo ""
-echo "Session-folder plots (require Workspaces/Output Re-Runs/sessions):"
-echo "  plot_rescreen_events_supplementary.py"
-echo "  plot_rescreen_events_true_neutral_zoom.py"
-echo "  plot_true_neutral_param_embedding.py"
-echo "  plot_hit_mutation_scale_violin_supplementary.py"

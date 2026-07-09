@@ -1,12 +1,14 @@
 # Figure Reconstruction
 
-Scripts to regenerate figures from *No Trade-Offs Required: Cross-Feeding From Survival Alone* (SecondPaperDraft). Copied from `Papers/SecondPaperDraft/scripts`; refresh with:
+Scripts to regenerate every figure in the main manuscript and Supplementary Information PDF for *No Trade-Offs Required: Cross-Feeding From Survival Alone*.
 
-```bash
-python3 tools/sync_figure_reconstruction_to_minimal.py
-```
-
-(from the MCCP_Enzymes repository root)
+| Output | Figure |
+|--------|--------|
+| `output/figures/mccp_chain.pdf` | Main text Fig. 1 |
+| `output/figures/mccp_four_conditions.pdf` | Main text Fig. 2 |
+| `output/figures/figure3_hit_panels.png` | Main text Fig. 3 |
+| `output/figures/simulation_loop_combined.pdf` | Supp. Fig. S1 |
+| `output/supplementary/figures/supplementary_rescreen_ridgelines.png` | Supp. Fig. S2 |
 
 ## Requirements
 
@@ -15,14 +17,23 @@ python3 tools/sync_figure_reconstruction_to_minimal.py
 
 ## Data
 
-Most plots read `data/figure_reproduction/batch_hit_counts.csv` (not included here — large HPC export). Place that file under `data/figure_reproduction/` before running the rebuild script.
+The data-driven figures read `data/figure_reproduction/batch_hit_counts.csv`. Place that file under `data/figure_reproduction/` before running the rebuild script.
 
-To assemble the CSV from raw HPC session folders (requires `Workspaces/Output` next to the GIT folder):
+To build the CSV from aggregated campaign outputs, collect:
+
+- `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` — primary-batch hit counts for all suites and configurations
+- `Re-Runs/sessions/` — hit re-screen CSVs (one folder per campaign session)
+- `Re-Runs-NonHits/sessions/` — optional non-hit re-screens (included in the CSV but not used by the five published figures)
+
+By default the script resolves these paths from the lab’s shared campaign output directory. If you mirror that tree locally, run:
 
 ```bash
+cd "tools/Figure Reconstruction"
 export PYTHONPATH="scripts${PYTHONPATH:+:$PYTHONPATH}"
 python3 scripts/assemble_figure_data.py
 ```
+
+This writes `data/figure_reproduction/batch_hit_counts.csv`.
 
 ## Quick rebuild
 
@@ -38,18 +49,11 @@ Outputs land in `output/`. TikZ PDFs are also written under `figures/Used/`.
 | Script | Output |
 |--------|--------|
 | `build_mccp_chain_figure.sh` | Fig. 1 — MCCP chain |
-| `build_mccp_four_conditions_figure.sh` | Four selection regimes |
-| `build_simulation_loop_combined_figure.sh` | Supp. simulation loop |
+| `build_mccp_four_conditions_figure.sh` | Fig. 2 — four selection regimes |
+| `build_simulation_loop_combined_figure.sh` | Supp. Fig. S1 — simulation loop |
+| `build_chemostat_snapshot_pdfs.sh` | Chemostat panels embedded in S1 (called by the script above) |
+| `assemble_figure_data.py` | `batch_hit_counts.csv` from aggregated campaign outputs |
 | `plot_figure3_panels.py` | Fig. 3 panels (a–b) |
-| `plot_rescreen_ridgeline_supplementary.py` | Supp. hit re-screen ridgelines |
-| `plot_non_hit_ridgeline_supplementary.py` | Supp. non-hit ridgelines |
-| `plot_rescreen_events_supplementary.py` | Supp. re-screen events |
-| `plot_rescreen_events_true_neutral_zoom.py` | Neutral zoom panel |
-| `plot_true_neutral_param_embedding.py` | Supp. parameter embedding (+ optional HTML explorer) |
-| `plot_hit_mutation_scale_violin_supplementary.py` | Hit parameter violins |
-| `rebuild_hit_counts_compare.py` | Rebuild primary-batch summary CSV from sessions |
-| `rebuild_rescreen_compare.py` | Rebuild hit re-screen compare CSV |
-| `rebuild_non_hit_rescreen_compare.py` | Rebuild non-hit re-screen compare CSV |
-| `verify_figure3_plots.py` | Cross-check Fig. 3 metrics against raw CSVs |
+| `plot_rescreen_ridgeline_supplementary.py` | Supp. Fig. S2 — hit re-screen ridgelines |
 
 Run individual scripts with `--help` for paths and options. Set `PYTHONPATH=scripts` when invoking from this folder.

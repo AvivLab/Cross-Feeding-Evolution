@@ -1,12 +1,6 @@
 # Paper batch settings
 
-Batch Runner JSON settings used for the HPC campaigns in *No Trade-Offs Required: Cross-Feeding From Survival Alone*. Refresh from the main workspace with:
-
-```bash
-python3 tools/sync_paper_settings_to_minimal.py
-```
-
-(from the MCCP_Enzymes repository root)
+Batch Runner JSON settings for the paper campaigns in *No Trade-Offs Required: Cross-Feeding From Survival Alone*.
 
 ## Layout
 

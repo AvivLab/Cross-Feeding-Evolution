@@ -55,7 +55,7 @@ The paper compares four selection regimes (Neutral, Death Selection, Duplication
 
 You can reproduce the workflow with two apps:
 
-1. **Batch Runner** — Open a JSON from `settings/` via **Load JSON Settings…**, choose a save folder, and run the campaign. Each file runs 100 batches of 1000 simulations with the paper’s metric filters and parameter bounds. Session output includes hit counts and the parameter vectors that hit.
+1. **Batch Runner** — Open a JSON from `settings/` via **Load JSON Settings**, choose a save folder, and run the campaign. Each file runs 100 batches of 1000 simulations with the paper’s metric filters and parameter bounds. Session output includes hit counts and the parameter vectors that hit.
 
 2. **Batch Re-Runner** — Load a finished Batch Runner session and **re-screen hits** (and optionally non-hits) with fresh random seeds. The paper used 20 re-screen seeds per hit to estimate how often the same parameter set passes again. Results are written under `Re-Runs/` inside the session folder.
 
@@ -63,12 +63,14 @@ Repeat steps 1–2 for each JSON in `settings/` that you need (seven fixed yield
 
 ## Reconstructing paper figures
 
-Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the manuscript schematics (TikZ) and data plots (Fig. 3 and supplementary panels) from a single table, `batch_hit_counts.csv`.
+Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the five figures in the main manuscript and Supplementary Information PDF (Figs. 1–3 and Supp. Figs. S1–S2) from a single table, `batch_hit_counts.csv`.
 
 **Typical workflow:**
 
 1. Complete Batch Runner campaigns and Batch Re-Runner re-screens for the configurations you need (see above).
-2. Assemble the combined CSV from your session folders:
+2. Build `batch_hit_counts.csv` and place it under `tools/Figure Reconstruction/data/figure_reproduction/`.
+
+   Finished campaigns must be collected in the aggregated output layout that `assemble_figure_data.py` expects: a summary table at `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` and re-screen exports under `Re-Runs/sessions/` (plus `Re-Runs-NonHits/sessions/` if non-hit re-screens were run). From this folder:
 
    ```bash
    cd "tools/Figure Reconstruction"
@@ -76,7 +78,7 @@ Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regen
    python3 scripts/assemble_figure_data.py
    ```
 
-   This writes `data/figure_reproduction/batch_hit_counts.csv`.
+   See `tools/Figure Reconstruction/README.md` for details.
 
 3. Rebuild figures:
 
@@ -86,7 +88,7 @@ Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regen
 
    Outputs appear under `output/`. TikZ schematic PDFs are also written under `figures/Used/`.
 
-**Requirements for figures:** Python packages from `requirements.txt`, plus **pdfLaTeX**, **latexmk**, and **pdfcrop** for the TikZ schematics. Some supplementary plots (events scatter, parameter embedding) need raw `Re-Runs/sessions` data rather than the CSV alone — see `tools/Figure Reconstruction/README.md` for individual script options.
+**Requirements for figures:** Python packages from `requirements.txt`, plus **pdfLaTeX**, **latexmk**, and **pdfcrop** for the TikZ schematics. See `tools/Figure Reconstruction/README.md` for the full output list and individual script options.
 
 ---
 
@@ -169,7 +171,7 @@ Two tabs:
 4. Choose a **Save folder** for the campaign output.
 5. Click **Run Batch**. Use **Pause** / **Resume** (or type `pause` / `resume` in the terminal) for long jobs.
 6. When complete, open the **Results** tab for hit-count plots and charts.
-7. Optional: **Save JSON Settings…** exports the setup for the headless batch runner; **Load Campaign Summary** reloads a finished session.
+7. Optional: **Load JSON Settings** / **Save JSON Settings** for batch setup files; **Load Campaign Summary** reloads a finished session.
 
 ### Outputs (inside your save folder)
 
@@ -206,13 +208,18 @@ Use **Non-Hits Only** or **Both** to compare how often parameter sets that faile
 
 ## Batch campaigns from the terminal (optional)
 
-You can run a batch campaign without the GUI. In Batch Runner, use **Save JSON Settings…** to write a settings file, then from this folder:
+You can run a batch campaign without the GUI. Paper-ready settings are in `settings/` (see `settings/README.md`). From this folder:
 
+```bash
+python headless/primary_batch_campaign.py settings/Fixed_3_ratio/c_justDeath_Fixed_3.json --output-dir OUTPUT_FOLDER
+```
+
+You can also export a custom setup from the Batch Runner GUI with **Save JSON Settings**, then pass that file instead:
 ```bash
 python headless/primary_batch_campaign.py SETTINGS.json --output-dir OUTPUT_FOLDER
 ```
 
-Replace `SETTINGS.json` with your saved settings file and `OUTPUT_FOLDER` with the folder where you want the session written.
+Replace `OUTPUT_FOLDER` with the folder where you want the session written.
 
 Optional flags:
 
