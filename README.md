@@ -76,7 +76,7 @@ Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regen
    python3 scripts/assemble_figure_data.py
    ```
 
-   This writes `data/figure_reproduction/batch_hit_counts.csv`. (The CSV is not shipped with this download because it is very large.)
+   This writes `data/figure_reproduction/batch_hit_counts.csv`.
 
 3. Rebuild figures:
 
