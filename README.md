@@ -6,6 +6,22 @@
 
 Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes four desktop apps for interactive runs, parameter search, and batch campaigns, plus optional command-line tools for batch runs and re-screening.
 
+## Contents
+
+- [About](#about)
+- [Requirements](#requirements)
+- [Install and run](#install-and-run)
+- [Individual Simulation](#individual-simulation)
+- [Gradient Descent Optimization](#gradient-descent-optimization)
+- [Batch Runner](#batch-runner)
+- [Batch Re-Runner](#batch-re-runner)
+- [Batch campaigns from the terminal (optional)](#batch-campaigns-from-the-terminal-optional)
+- [Re-screening from the terminal (optional)](#re-screening-from-the-terminal-optional)
+- [Files in this download](#files-in-this-download)
+- [Recreating the paper results](#recreating-the-paper-results)
+- [Reconstructing paper figures](#reconstructing-paper-figures)
+- [Correspondence](#correspondence)
+
 ## About
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
@@ -46,49 +62,6 @@ Aviv Bergman is also affiliated with the Santa Fe Institute, Santa Fe, NM 87501,
    ```
 
 Choose one of the four tools from the launcher window.
-
-## Recreating the paper results
-
-The paper compares four selection regimes (Neutral, Death Selection, Duplication Selection, and Death and Duplication Selection) across fixed task-energy yield ratios.
-
-**All Batch Runner JSON settings used in the paper are included in the `settings/` folder** — one file per suite and configuration (e.g. `settings/Fixed_3_ratio/c_justDeath_Fixed_3.json`). See `settings/README.md` for the full list of suites and config names.
-
-You can reproduce the workflow with two apps:
-
-1. **Batch Runner** — Open a JSON from `settings/` via **Load JSON Settings**, choose a save folder, and run the campaign. Each file runs 100 batches of 1000 simulations with the paper’s metric filters and parameter bounds. Session output includes hit counts and the parameter vectors that hit.
-
-2. **Batch Re-Runner** — Load a finished Batch Runner session and **re-screen hits** (and optionally non-hits) with fresh random seeds. The paper used 20 re-screen seeds per hit to estimate how often the same parameter set passes again. Results are written under `Re-Runs/` inside the session folder.
-
-Repeat steps 1–2 for each JSON in `settings/` that you need (seven fixed yield-ratio suites × four configurations). Large campaigns are long-running; the same JSON files work with the headless batch runner on a cluster (see `settings/README.md` and *Batch campaigns from the terminal* below). Once you have primary batches and re-screens, the figure scripts below can turn those outputs into plots.
-
-## Reconstructing paper figures
-
-Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the five figures in the main manuscript and Supplementary Information PDF (Figs. 1–3 and Supp. Figs. S1–S2) from a single table, `batch_hit_counts.csv`.
-
-**Typical workflow:**
-
-1. Complete Batch Runner campaigns and Batch Re-Runner re-screens for the configurations you need (see above).
-2. Build `batch_hit_counts.csv` and place it under `tools/Figure Reconstruction/data/figure_reproduction/`.
-
-   Finished campaigns must be collected in the aggregated output layout that `assemble_figure_data.py` expects: a summary table at `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` and re-screen exports under `Re-Runs/sessions/` (plus `Re-Runs-NonHits/sessions/` if non-hit re-screens were run). From this folder:
-
-   ```bash
-   cd "tools/Figure Reconstruction"
-   export PYTHONPATH="scripts${PYTHONPATH:+:$PYTHONPATH}"
-   python3 scripts/assemble_figure_data.py
-   ```
-
-   See `tools/Figure Reconstruction/README.md` for details.
-
-3. Rebuild figures:
-
-   ```bash
-   ./rebuild_all_figures.sh
-   ```
-
-   Outputs appear under `output/`. TikZ schematic PDFs are also written under `figures/Used/`.
-
-**Requirements for figures:** Python packages from `requirements.txt`, plus **pdfLaTeX**, **latexmk**, and **pdfcrop** for the TikZ schematics. See `tools/Figure Reconstruction/README.md` for the full output list and individual script options.
 
 ---
 
@@ -257,6 +230,51 @@ Re-screen outputs are written inside that session folder under `Re-Runs/` or `Re
 - `tools/Figure Reconstruction/` — scripts to regenerate paper figures (see its README)
 - `docs/bergman_lab_logo.png` — Bergman Lab logo
 - `docs/screenshots/` — GUI screenshots referenced above
+
+---
+
+## Recreating the paper results
+
+The paper compares four selection regimes (Neutral, Death Selection, Duplication Selection, and Death and Duplication Selection) across fixed task-energy yield ratios.
+
+**All Batch Runner JSON settings used in the paper are included in the `settings/` folder** — one file per suite and configuration (e.g. `settings/Fixed_3_ratio/c_justDeath_Fixed_3.json`). See `settings/README.md` for the full list of suites and config names.
+
+You can reproduce the workflow with two apps:
+
+1. **Batch Runner** — Open a JSON from `settings/` via **Load JSON Settings**, choose a save folder, and run the campaign. Each file runs 100 batches of 1000 simulations with the paper’s metric filters and parameter bounds. Session output includes hit counts and the parameter vectors that hit.
+
+2. **Batch Re-Runner** — Load a finished Batch Runner session and **re-screen hits** (and optionally non-hits) with fresh random seeds. The paper used 20 re-screen seeds per hit to estimate how often the same parameter set passes again. Results are written under `Re-Runs/` inside the session folder.
+
+Repeat steps 1–2 for each JSON in `settings/` that you need (seven fixed yield-ratio suites × four configurations). Large campaigns are long-running; the same JSON files work with the headless batch runner on a cluster (see `settings/README.md` and [Batch campaigns from the terminal (optional)](#batch-campaigns-from-the-terminal-optional)). Once you have primary batches and re-screens, the [figure reconstruction scripts](#reconstructing-paper-figures) can turn those outputs into plots.
+
+## Reconstructing paper figures
+
+Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the five figures in the main manuscript and Supplementary Information PDF (Figs. 1–3 and Supp. Figs. S1–S2) from a single table, `batch_hit_counts.csv`.
+
+**Typical workflow:**
+
+1. Complete Batch Runner campaigns and Batch Re-Runner re-screens for the configurations you need (see [Recreating the paper results](#recreating-the-paper-results)).
+2. Build `batch_hit_counts.csv` and place it under `tools/Figure Reconstruction/data/figure_reproduction/`.
+
+   Finished campaigns must be collected in the aggregated output layout that `assemble_figure_data.py` expects: a summary table at `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` and re-screen exports under `Re-Runs/sessions/` (plus `Re-Runs-NonHits/sessions/` if non-hit re-screens were run). From this folder:
+
+   ```bash
+   cd "tools/Figure Reconstruction"
+   export PYTHONPATH="scripts${PYTHONPATH:+:$PYTHONPATH}"
+   python3 scripts/assemble_figure_data.py
+   ```
+
+   See `tools/Figure Reconstruction/README.md` for details.
+
+3. Rebuild figures:
+
+   ```bash
+   ./rebuild_all_figures.sh
+   ```
+
+   Outputs appear under `output/`. TikZ schematic PDFs are also written under `figures/Used/`.
+
+**Requirements for figures:** Python packages from `requirements.txt`, plus **pdfLaTeX**, **latexmk**, and **pdfcrop** for the TikZ schematics. See `tools/Figure Reconstruction/README.md` for the full output list and individual script options.
 
 ---
 
