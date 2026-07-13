@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/bergman_lab_logo.png" alt="Bergman Lab logo" width="480"/>
+  <img src="images/BergmanLogo.png" alt="Bergman Lab logo" width="480"/>
 </p>
 
 # MCCP_Enzymes
@@ -102,9 +102,8 @@ Search parameter space to improve a chosen metric using finite-difference gradie
 
 ### Layout
 
-- **Left** — optimization controls (metric, maximize/minimize, learning rate, iterations, random starts, replicates) and the list of parameters to optimize (fix/unfix, min/max bounds).
-- **Right** — fixed parameters and simulation toggles that stay constant during the search.
-- **Bottom** — run controls, progress, and buttons to save/load results.
+- **Left panel** — **Optimization Settings**, **Parameters to Optimize** (fix/unfix, min/max bounds), fixed parameter values, simulation toggles, and run buttons at the bottom (**Start**, **Pause**, **Stop**, **Parameter Heatmaps**, **Metric Histogram**, full-save controls).
+- **Right panel** — **Optimization Results** scrollable log and the **Simulation Pathway Diagram**.
 
 ### Typical workflow
 
@@ -112,12 +111,12 @@ Search parameter space to improve a chosen metric using finite-difference gradie
 2. Under **Parameters to Optimize**, leave parameters unfixed and set min/max bounds for those you want the search to adjust; fix others at known values.
 3. Set **Number of Random Starts** and **Gradient Descents per Start** (use 0 descents with 0 max iterations for random-start sampling only).
 4. Adjust **Learning Rate**, **Gradient Step Size**, and **Max Iterations** as needed (tooltips describe each control).
-5. Set a **Full Save Folder** if you want large runs offloaded to disk instead of kept entirely in memory.
-6. Click **Run Optimization** and monitor progress.
-7. When finished, open **Analyze Results** (or equivalent analysis window) for tables, histograms, and optional parameter heatmaps / UMAP of evaluated points.
-8. Use **Save Dataset** to export a portable snapshot, or **Load Dataset** / **Load Full Save Session** to continue from a previous run.
+5. Click **Set Full Save Folder** and choose where runs will be written (required before **Start**).
+6. Click **Start** and monitor progress in **Optimization Results** and the progress bar.
+7. When you have results, open **Metric Histogram** for histograms, filters, optional **UMAP (Clickable)** (needs `umap-learn`), and **Parameter Heatmaps (Filtered)**; or use **Parameter Heatmaps** for a simpler heatmap view.
+8. To continue later, use **Load Dataset** or **Load Full Save Session**. Completed full-save runs also write offload batches and a session manifest under the folder from step 5.
 
-Each metric evaluation may run several simulation replicates with derived seeds, so results can be noisy; increase replicates for smoother objectives.
+Each metric evaluation may run several simulation replicates with derived seeds, so results can be noisy; increase **Number of Replicates** for smoother objectives.
 
 ---
 
@@ -133,22 +132,22 @@ Run many independent Monte Carlo batches over a parameter box and count how ofte
 
 Two tabs:
 
-- **Setup & metrics** — parameter panel (same style as optimization: fixed values vs sampled ranges), batch size, metric filters A–D, save folder, and **Run Batch**.
-- **Results** — hit-count histogram and primary-event charts after a campaign finishes or is loaded.
+- **Setup & metrics** — parameter panel (same style as optimization: fixed values vs sampled ranges), batch size, metric filters A–D, save folder, pathway diagram, and **Run Batch**.
+- **Results** — hit-count violin plot, simulation event-rate chart, and **Parameter Heatmaps** after a campaign finishes or is loaded.
 
 ### Typical workflow
 
 1. On **Setup & metrics**, set **Runs per batch (N)** and **Number of batches**.
 2. In the parameter panel, mark which parameters are fixed and which are drawn uniformly from min/max bounds each simulation.
 3. Configure **Metric A** (required) and optionally **B–C–D**; every active filter must pass for a hit (AND logic).
-4. Choose a **Save folder** for the campaign output.
+4. Click **Choose Save Folder** and pick where the campaign output will be written.
 5. Click **Run Batch**. Use **Pause** / **Resume** (or type `pause` / `resume` in the terminal) for long jobs.
-6. When complete, open the **Results** tab for hit-count plots and charts.
+6. When complete, open the **Results** tab for hit-count and event-rate plots.
 7. Optional: **Load JSON Settings** / **Save JSON Settings** for batch setup files; **Load Campaign Summary** reloads a finished session.
 
 ### Outputs (inside your save folder)
 
-Each campaign creates a **session folder** containing simulation offload batches, `primary_batch_campaign_<session>.json`, and a hit-count CSV. Keep that folder path for Batch Re-Runner or command-line re-screening.
+Each campaign creates a **session folder** with simulation offload batches, a campaign summary JSON (`primary_batch_campaign_<session>.json`), and a hit-count CSV (`batch_hit_counts_<session>.csv`, or similar). Keep that folder path for Batch Re-Runner or command-line re-screening.
 
 ---
 
@@ -162,8 +161,8 @@ Re-test hits or non-hits from a finished Batch Runner campaign with fresh random
 
 ### Layout
 
-- **Load campaign** — pick the session folder from a completed Batch Runner run; the panel shows session id and hit/non-hit counts.
-- **Re-screen options** — hits only, non-hits only, or both; seeds per point, worker count, optional deduplication of identical parameter vectors.
+- **Load campaign** (left) — **Choose Session Folder**, session id, and hit/non-hit counts.
+- **Re-screen options** (left) — hits only, non-hits only, or both; seeds per point, worker count, optional deduplication of identical parameter vectors.
 - **Loaded session** (right) — summary of metric filters and bounds from the original campaign.
 
 ### Typical workflow
@@ -220,16 +219,101 @@ Re-screen outputs are written inside that session folder under `Re-Runs/` or `Re
 
 ## Files in this download
 
-- `main.py` — starts the GUI launcher
-- `requirements.txt` — packages to install with pip
-- `gui/` — desktop applications
-- `headless/primary_batch_campaign.py` — command-line batch campaigns
-- `headless/primary_hit_rescreen.py` — command-line re-screening
-- `simulation/` — simulation engine used by the apps above
-- `settings/` — paper Batch Runner JSON settings (suites × four configurations)
-- `tools/Figure Reconstruction/` — scripts to regenerate paper figures (see its README)
-- `docs/bergman_lab_logo.png` — Bergman Lab logo
-- `docs/screenshots/` — GUI screenshots referenced above
+```mermaid
+flowchart TB
+  req["requirements.txt"]
+
+  subgraph launch["Entry point"]
+    main["main.py"]
+  end
+
+  subgraph gui["gui/ — desktop apps"]
+    launcher["Launcher"]
+    individual["Individual Simulation"]
+    gradient["Gradient Descent"]
+    batchrun["Batch Runner"]
+    batchrerun["Batch Re-Runner"]
+  end
+
+  subgraph engine["simulation/"]
+    simcore["core.py\nmain chemostat loop"]
+    simhelpers["helpers.py\ninvestment & trait mutation"]
+    simhistory["change_history.py\nper-generation event counts"]
+    simcore --> simhelpers
+    simcore --> simhistory
+  end
+
+  subgraph headless["headless/ — optional CLI"]
+    pbc["primary_batch_campaign.py"]
+    phr["primary_hit_rescreen.py"]
+  end
+
+  subgraph paper["Paper reproduction"]
+    settings["settings/*.json"]
+    session["Campaign session folder\n(your save directory)"]
+    reruns["Re-Runs/ inside session"]
+    fig["tools/Figure Reconstruction/"]
+    csv["data/figure_reproduction/\nbatch_hit_counts.csv"]
+    outfig["output/ figures"]
+  end
+
+  subgraph docs["docs/"]
+    assets["GUI screenshots"]
+  end
+
+  subgraph images["images/"]
+    logo["Bergman Lab logo"]
+  end
+
+  req -.-> main
+  req -.-> gui
+  req -.-> headless
+  req -.-> fig
+
+  main --> launcher
+  launcher --> individual & gradient & batchrun & batchrerun
+
+  individual & gradient & batchrun & batchrerun --> simcore
+  pbc & phr --> simcore
+
+  settings --> batchrun
+  settings --> pbc
+  batchrun --> session
+  pbc --> session
+  session --> batchrerun
+  session --> phr
+  batchrerun --> reruns
+  phr --> reruns
+  session --> fig
+  reruns --> fig
+  fig --> csv --> outfig
+
+  assets -.-> launcher
+```
+
+**How to read this diagram**
+
+- **`main.py`** opens the **launcher**, which starts one of four apps under **`gui/`**. Every app runs simulations through **`simulation/core.py`**, which uses **`helpers.py`** (investment and mutation) and **`change_history.py`** (deaths, duplications, flow, mutations per generation).
+- **`settings/`** holds ready-made Batch Runner JSON files for the paper. Load them in **Batch Runner** or pass them to **`headless/primary_batch_campaign.py`** to write a **campaign session folder** on disk.
+- **Batch Re-Runner** or **`headless/primary_hit_rescreen.py`** reads that session and writes **`Re-Runs/`** re-screen results back into it.
+- **`tools/Figure Reconstruction/`** assembles campaign data into **`batch_hit_counts.csv`** and rebuilds the published figures under **`output/`**.
+- **`docs/`** holds GUI screenshots for this README; **`images/`** holds the Bergman Lab logo; **`requirements.txt`** lists Python packages for everything above.
+
+| Path | Role |
+|------|------|
+| `main.py` | Starts the GUI launcher |
+| `requirements.txt` | Python packages (`pip install -r requirements.txt`) |
+| `gui/` | Individual Simulation, Gradient Descent, Batch Runner, Batch Re-Runner |
+| `simulation/__init__.py` | Python package marker |
+| `simulation/core.py` | Main chemostat evolution loop (called by all apps and headless tools) |
+| `simulation/helpers.py` | Investment function and trait mutation helpers used by `core.py` |
+| `simulation/change_history.py` | Per-generation death, duplication, flow, and mutation counts |
+| `headless/primary_batch_campaign.py` | Command-line batch campaigns |
+| `headless/primary_hit_rescreen.py` | Command-line re-screening |
+| `settings/` | Paper Batch Runner JSON settings (7 suites × 4 configurations) |
+| `tools/Figure Reconstruction/` | Scripts to build `batch_hit_counts.csv` and regenerate paper figures |
+| `docs/` | GUI screenshots for this README |
+| `images/` | Bergman Lab logo |
 
 ---
 
