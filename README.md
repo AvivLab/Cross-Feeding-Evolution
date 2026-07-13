@@ -1,6 +1,6 @@
 <div align="center">
   <img src="docs/BergmanLogo.png" alt="Bergman Lab logo" width="480" style="display:block;margin:0 auto 6px;" />
-  <h1 style="margin:0 0 10px;border:none;">MCCP_Enzymes</h1>
+  <h1 style="margin:0 0 10px;border:none;">Cross-Feeding Evolution</h1>
 </div>
 
 Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes four desktop apps for interactive runs, parameter search, and batch campaigns, plus optional command-line tools for batch runs and re-screening.
