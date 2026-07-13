@@ -17,7 +17,7 @@ PAPER_CONFIG_ORDER: Sequence[Tuple[str, str, str]] = (
     ("Neutral", "Neutral", "#59a14f"),
     ("justDeath", "Differential Death", "#e15759"),
     ("justDup", "Differential Reproduction", "#4e79a7"),
-    ("Death+Dup", "Differential Death and Duplication", "#b07aa1"),
+    ("Death+Dup", "Differential Death and Reproduction", "#b07aa1"),
 )
 PANEL_LETTERS = "abcd"
 N_SIMS_PER_BATCH = 1000

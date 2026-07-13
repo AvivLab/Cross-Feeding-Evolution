@@ -49,7 +49,7 @@ Outputs land in `output/`. TikZ PDFs are also written under `figures/Used/`.
 | Script | Output |
 |--------|--------|
 | `build_mccp_chain_figure.sh` | Fig. 1 — MCCP chain |
-| `build_mccp_four_conditions_figure.sh` | Fig. 2 — four regimes (Neutral / Differential Death / Differential Reproduction / Differential Death and Duplication) |
+| `build_mccp_four_conditions_figure.sh` | Fig. 2 — four regimes (Neutral / Differential Death / Differential Reproduction / Differential Death and Reproduction) |
 | `build_simulation_loop_combined_figure.sh` | Supp. Fig. S1 — simulation loop |
 | `build_chemostat_snapshot_pdfs.sh` | Chemostat panels embedded in S1 (called by the script above) |
 | `assemble_figure_data.py` | `batch_hit_counts.csv` from aggregated campaign outputs |

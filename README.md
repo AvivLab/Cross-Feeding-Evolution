@@ -313,7 +313,7 @@ flowchart TB
 
 ## Recreating the paper results
 
-The paper compares four regimes (Neutral, Differential Death, Differential Reproduction, and Differential Death and Duplication) across fixed task-energy yield ratios.
+The paper compares four regimes (Neutral, Differential Death, Differential Reproduction, and Differential Death and Reproduction) across fixed task-energy yield ratios.
 
 **All Batch Runner JSON settings used in the paper are included in the `settings/` folder** — one file per suite and configuration (e.g. `settings/Fixed_3_ratio/c_justDeath_Fixed_3.json`). See `settings/README.md` for the full list of suites and config names.
 
