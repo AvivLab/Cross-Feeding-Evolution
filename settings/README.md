@@ -21,9 +21,9 @@ Each suite contains four **paper configurations** (100 batches × 1000 simulatio
 | File prefix | Paper name |
 |-------------|------------|
 | `a_` | Neutral (`trueNeutral`) |
-| `c_` | Death Selection (`justDeath`) |
-| `d_` | Duplication Selection (`justDup`) |
-| `e_` | Death and Duplication Selection (`Death+Dup`) |
+| `c_` | Differential Death (`justDeath`) |
+| `d_` | Differential Reproduction (`justDup`) |
+| `e_` | Differential Death and Duplication (`Death+Dup`) |
 
 All four metric filters A–C must pass for a hit (filter D is inactive). See any JSON file for bounds, toggles, and thresholds.
 

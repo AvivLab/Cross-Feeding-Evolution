@@ -1,4 +1,4 @@
-% Four configurations: neutral chemostat baseline + three selection regimes.
+% Four configurations: neutral chemostat baseline + three differential regimes.
 % 2x2 panel grid; horizontal legend below; headers sit directly above each plot.
 \begin{tikzpicture}[font=\small, >=Stealth]
 
@@ -116,7 +116,7 @@
   \mccpcondpaneldecor{axA}
 \end{scope}
 
-% --- (b) Death Selection ---
+% --- (b) Differential Death ---
 \begin{scope}[local bounding box=mccppanel, shift={(\mccpcondcolB,\dimexpr\mccpcondbottombase+\mccpcondrowpitch\relax)}]
   \begin{axis}[
     mccp cond combined,
@@ -132,12 +132,12 @@
     \mccpcondaddoutflow
   \end{axis}
   \def\mccpcondletter{b}%
-  \def\mccpcondtitle{Death Selection}%
+  \def\mccpcondtitle{Differential Death}%
   \def\mccpcondsubtitle{eq.\ (4); Constant Duplication}%
   \mccpcondpaneldecor{axB}
 \end{scope}
 
-% --- (c) Duplication Selection ---
+% --- (c) Differential Reproduction ---
 \begin{scope}[local bounding box=mccppanel, shift={(0,\mccpcondbottombase)}]
   \begin{axis}[
     mccp cond combined,
@@ -153,12 +153,12 @@
     \mccpcondaddoutflow
   \end{axis}
   \def\mccpcondletter{c}%
-  \def\mccpcondtitle{Duplication Selection}%
+  \def\mccpcondtitle{Differential Reproduction}%
   \def\mccpcondsubtitle{No Death; eq.\ (5)}%
   \mccpcondpaneldecor{axC}
 \end{scope}
 
-% --- (d) Death and Duplication Selection ---
+% --- (d) Differential Death and Duplication ---
 \begin{scope}[local bounding box=mccppanel, shift={(\mccpcondcolB,\mccpcondbottombase)}]
   \begin{axis}[
     mccp cond combined,
@@ -176,7 +176,7 @@
     \mccpcondaddoutflow
   \end{axis}
   \def\mccpcondletter{d}%
-  \def\mccpcondtitle{Death and Duplication Selection}%
+  \def\mccpcondtitle{Differential Death and Duplication}%
   \def\mccpcondsubtitle{eq.\ (4), (5)}%
   \mccpcondpaneldecor{axD}
 \end{scope}
