@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="images/BergmanLogo.png" alt="Bergman Lab logo" width="480" style="display:block;margin:0 auto 6px;" />
+  <img src="docs/BergmanLogo.png" alt="Bergman Lab logo" width="480" style="display:block;margin:0 auto 6px;" />
   <h1 style="margin:0 0 10px;border:none;">MCCP_Enzymes</h1>
 </div>
 
@@ -257,11 +257,7 @@ flowchart TB
   end
 
   subgraph docs["docs/"]
-    assets["GUI screenshots"]
-  end
-
-  subgraph images["images/"]
-    logo["Bergman Lab logo"]
+    assets["Logo & GUI screenshots"]
   end
 
   req -.-> main
@@ -296,7 +292,7 @@ flowchart TB
 - **`settings/`** holds ready-made Batch Runner JSON files for the paper. Load them in **Batch Runner** or pass them to **`headless/primary_batch_campaign.py`** to write a **campaign session folder** on disk.
 - **Batch Re-Runner** or **`headless/primary_hit_rescreen.py`** reads that session and writes **`Re-Runs/`** re-screen results back into it.
 - **`tools/Figure Reconstruction/`** assembles campaign data into **`batch_hit_counts.csv`** and rebuilds the published figures under **`output/`**.
-- **`docs/`** holds GUI screenshots for this README; **`images/`** holds the Bergman Lab logo; **`requirements.txt`** lists Python packages for everything above.
+- **`docs/`** holds the Bergman Lab logo and GUI screenshots for this README; **`requirements.txt`** lists Python packages for everything above.
 
 | Path | Role |
 |------|------|
@@ -311,8 +307,7 @@ flowchart TB
 | `headless/primary_hit_rescreen.py` | Command-line re-screening |
 | `settings/` | Paper Batch Runner JSON settings (7 suites × 4 configurations) |
 | `tools/Figure Reconstruction/` | Scripts to build `batch_hit_counts.csv` and regenerate paper figures |
-| `docs/` | GUI screenshots for this README |
-| `images/` | Bergman Lab logo |
+| `docs/` | Bergman Lab logo and GUI screenshots for this README |
 
 ---
 
