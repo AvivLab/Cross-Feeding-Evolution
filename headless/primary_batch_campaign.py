@@ -25,6 +25,11 @@ import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+# Allow ``python headless/primary_batch_campaign.py …`` from the bundle root.
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
 from gui.apps.batch_runner.csv_output import write_session_hit_counts_csv
 from gui.apps.neutral_comparison.batch import run_hit_count_batch, simulation_light_tracking_plan
 from gui.apps.neutral_comparison.offload import NeutralComparisonOffloadWriter
@@ -136,6 +141,10 @@ def run_from_primary_batch_campaign_json(
         "base_seed": base_seed,
         "configuration_name": str(data.get("configuration_name") or ""),
         "metric_filters": list(metric_filters_snapshot),
+        "primary_bounds": _bounds_jsonable(primary_bounds),
+        "primary_numeric_parameters": num_p,
+        "primary_toggles": tog_p,
+        "primary_offload_param_names": list(param_names_list),
         "simulation_light_tracking": bool(sim_light_used),
         "simulation_light_tracking_metrics": list(sim_light_canon),
         "full_save_folder": folder,

@@ -34,6 +34,11 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 import numpy as np
 
+# Allow ``python headless/primary_hit_rescreen.py …`` from the bundle root.
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
 from gui.apps.neutral_comparison.batch import (
     _merge_params,
     _metric_checks_ordered_cheapest_first_many,
@@ -1677,8 +1682,9 @@ def merge_multinode_rescreen_partials(
     )
     if hm and hm.get("png_path"):
         print(f"Wrote: {hm.get('png_path')}", flush=True)
-    elif hm and not hm.get("png_path"):
-        print("Note: re-hit parameter heatmap not written (matplotlib unavailable).", flush=True)
+    elif write_rehit_heatmap and not (hm and hm.get("png_path")):
+        # JSON sidecar may still exist; PNG is optional when drawing fails.
+        print("Note: re-hit parameter heatmap PNG was not written.", flush=True)
     gt90_png = summary.get("rehit_rate_gt90_heatmap_png")
     if gt90_png:
         print(f"Wrote: {gt90_png}", flush=True)
@@ -1955,7 +1961,7 @@ def maybe_write_rescreen_rehit_heatmap_for_summary(
     if not csv_path or not os.path.isfile(csv_path):
         return None
     try:
-        from rescreen_rehit_parameter_heatmap import build_rescreen_rehit_heatmaps
+        from headless.rescreen_rehit_parameter_heatmap import build_rescreen_rehit_heatmaps
 
         heatmaps = build_rescreen_rehit_heatmaps(
             csv_path,
@@ -2220,8 +2226,8 @@ def rescreen_session(
     )
     if progress and hm and hm.get("png_path"):
         print(f"Wrote: {hm.get('png_path')}", flush=True)
-    elif progress and hm and not hm.get("png_path"):
-        print("Note: re-hit parameter heatmap not written (matplotlib unavailable).", flush=True)
+    elif progress and write_rehit_heatmap and not (hm and hm.get("png_path")):
+        print("Note: re-hit parameter heatmap PNG was not written.", flush=True)
     gt90_png = summary.get("rehit_rate_gt90_heatmap_png")
     if progress and gt90_png:
         print(f"Wrote: {gt90_png}", flush=True)

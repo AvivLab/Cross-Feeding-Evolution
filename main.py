@@ -1,5 +1,11 @@
 import os
+import sys
 import warnings
+
+# Ensure the bundle/repo root is importable when launched as ``python main.py``.
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
 
 # Suppress multiprocessing resource_tracker shutdown warnings.
 warnings.filterwarnings('ignore', category=UserWarning, module='multiprocessing.resource_tracker')

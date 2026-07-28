@@ -23,7 +23,7 @@ Simulate microbial evolution in a chemostat using the **MCCM** model (Minimal Cr
 
 ## About
 
-- **Version:** 1.1.0
+- **Version:** 1.1.1
 - **Last updated:** 2026-07-28
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
@@ -149,7 +149,7 @@ Two tabs:
 
 ### Outputs (inside your save folder)
 
-Each campaign creates a **session folder** with simulation offload batches, a campaign summary JSON (`primary_batch_campaign_<session>.json`), and a hit-count CSV (`batch_hit_counts_<session>.csv`, or similar). Keep that folder path for Batch Re-Runner or command-line re-screening.
+Each campaign creates a **session folder** with simulation offload batches, a campaign summary JSON (`primary_batch_campaign_<session>.json`), and—when there are hits—a hit-count CSV (`batch_hit_counts_<session>.csv`, or a configuration-slug variant). Keep that folder path for Batch Re-Runner or command-line re-screening.
 
 ---
 
@@ -200,7 +200,7 @@ Optional flags:
 - `--session-id NAME` — name the session (default: a timestamp)
 - `--progress-every N` — print progress every N simulations per batch
 
-The run creates the same kinds of outputs as the GUI: offload batches, a hit-count CSV, and `primary_batch_campaign_<session>.json` inside `OUTPUT_FOLDER`.
+The run creates the same kinds of outputs as the GUI: offload batches, a campaign summary JSON (`primary_batch_campaign_<session>.json`), and—when the campaign has hits—a per-hit CSV (`batch_hit_counts_<session>.csv`, or a configuration-slug variant).
 
 ---
 
