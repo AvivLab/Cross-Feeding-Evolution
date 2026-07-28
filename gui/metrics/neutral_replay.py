@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from gui.metrics.definitions import (
+    EXCHANGE_NEUTRAL_PERCENTILE_SIMS,
     NEUTRAL_PERCENTILE_MAX_SIMS,
     NEUTRAL_PERCENTILE_MIN_SIMS,
     NEUTRAL_PERCENTILE_TARGET_CI_PCT,
@@ -31,6 +32,30 @@ def parse_neutral_events(change_history):
             continue
         events.append((deaths, dups, flow_removed, accepted_mutations))
     return events
+
+
+def events_at_metabolism_time_of_last_generation(events):
+    """Drop the last generation's demographic events.
+
+    Real ``task1``/``task2`` are recorded at metabolism time (after inflow,
+    before death/dup/flow/mutation) using post-inflow pools. Neutral synthetic
+    tasks must use the same timing: traits after events ``0..G-2``, not after
+    the final generation's demographic events ``G-1``.
+    """
+    if isinstance(events, tuple) and len(events) == 4:
+        try:
+            arrays = [np.asarray(a) for a in events]
+            if all(getattr(a, "ndim", None) == 1 for a in arrays):
+                sizes = {int(a.size) for a in arrays}
+                if len(sizes) == 1:
+                    if next(iter(sizes)) == 0:
+                        return events
+                    return tuple(a[:-1] for a in arrays)
+        except Exception:
+            pass
+    if not events:
+        return events
+    return events[:-1]
 
 
 def _events_to_compact_arrays(events):
@@ -258,20 +283,20 @@ def neutral_percentile_pair(
     if _LAST_NEUTRAL_PERCENTILE_KEY == key and isinstance(_LAST_NEUTRAL_PERCENTILE_VALUE, tuple):
         return _LAST_NEUTRAL_PERCENTILE_VALUE
 
-    n_valid_std = n_le_real_std = 0
-    n_valid_entropy = n_le_real_entropy = 0
+    n_valid_std = n_lt_real_std = 0
+    n_valid_entropy = n_lt_real_entropy = 0
     compact_events = _events_to_compact_arrays(events)
 
     def _accumulate_one(neutral_std, neutral_entropy):
-        nonlocal n_valid_std, n_le_real_std, n_valid_entropy, n_le_real_entropy
+        nonlocal n_valid_std, n_lt_real_std, n_valid_entropy, n_lt_real_entropy
         if w in ("std", "both") and not np.isnan(neutral_std):
             n_valid_std += 1
-            if neutral_std <= real_std:
-                n_le_real_std += 1
+            if neutral_std < real_std:
+                n_lt_real_std += 1
         if w in ("entropy", "both") and not np.isnan(neutral_entropy):
             n_valid_entropy += 1
-            if neutral_entropy <= real_entropy:
-                n_le_real_entropy += 1
+            if neutral_entropy < real_entropy:
+                n_lt_real_entropy += 1
 
     def _adaptive_stop_ready():
         if not (NEUTRAL_PERCENTILE_TARGET_CI_PCT > 0.0):
@@ -279,20 +304,20 @@ def neutral_percentile_pair(
         if w == "both":
             if n_valid_std < NEUTRAL_PERCENTILE_MIN_SIMS or n_valid_entropy < NEUTRAL_PERCENTILE_MIN_SIMS:
                 return False
-            p_std = n_le_real_std / n_valid_std
-            p_entropy = n_le_real_entropy / n_valid_entropy
+            p_std = n_lt_real_std / n_valid_std
+            p_entropy = n_lt_real_entropy / n_valid_entropy
             ci_std = 100.0 * 1.96 * np.sqrt(p_std * (1.0 - p_std) / n_valid_std)
             ci_entropy = 100.0 * 1.96 * np.sqrt(p_entropy * (1.0 - p_entropy) / n_valid_entropy)
             return ci_std <= NEUTRAL_PERCENTILE_TARGET_CI_PCT and ci_entropy <= NEUTRAL_PERCENTILE_TARGET_CI_PCT
         if w == "std":
             if n_valid_std < NEUTRAL_PERCENTILE_MIN_SIMS:
                 return False
-            p_std = n_le_real_std / n_valid_std
+            p_std = n_lt_real_std / n_valid_std
             return 100.0 * 1.96 * np.sqrt(p_std * (1.0 - p_std) / n_valid_std) <= NEUTRAL_PERCENTILE_TARGET_CI_PCT
         if w == "entropy":
             if n_valid_entropy < NEUTRAL_PERCENTILE_MIN_SIMS:
                 return False
-            p_entropy = n_le_real_entropy / n_valid_entropy
+            p_entropy = n_lt_real_entropy / n_valid_entropy
             return (
                 100.0 * 1.96 * np.sqrt(p_entropy * (1.0 - p_entropy) / n_valid_entropy)
                 <= NEUTRAL_PERCENTILE_TARGET_CI_PCT
@@ -312,8 +337,8 @@ def neutral_percentile_pair(
         if _adaptive_stop_ready():
             break
 
-    std_percentile = float(100.0 * n_le_real_std / n_valid_std) if n_valid_std > 0 else np.nan
-    entropy_percentile = float(100.0 * n_le_real_entropy / n_valid_entropy) if n_valid_entropy > 0 else np.nan
+    std_percentile = float(100.0 * n_lt_real_std / n_valid_std) if n_valid_std > 0 else np.nan
+    entropy_percentile = float(100.0 * n_lt_real_entropy / n_valid_entropy) if n_valid_entropy > 0 else np.nan
     if w == "std":
         entropy_percentile = np.nan
     elif w == "entropy":
@@ -356,46 +381,42 @@ def neutral_percentile_t2heavy_task2_share(
 
     mrate = float(mutation_rate)
     mscale = float(mutation_scale)
+    # Align with real task1/task2: metabolism-time traits + post-inflow pools.
+    events_for_tasks = events_at_metabolism_time_of_last_generation(events)
     key = (
         id(_enzyme_A_final_cache_id),
         id(task1_real),
         id(task2_real),
         id(initial_traits),
         events_cache_key if events_cache_key is not None else id(events),
+        "metab_time_traits_v1",
         mrate,
         mscale,
         float(metab1env),
         float(metab2env),
         float(inv_mod),
         id(t2_percent_fn),
-        int(NEUTRAL_PERCENTILE_MAX_SIMS),
-        int(NEUTRAL_PERCENTILE_MIN_SIMS),
-        float(NEUTRAL_PERCENTILE_TARGET_CI_PCT),
+        int(EXCHANGE_NEUTRAL_PERCENTILE_SIMS),
     )
     if _LAST_NEUTRAL_T2HEAVY_PERCENTILE_KEY == key and _LAST_NEUTRAL_T2HEAVY_PERCENTILE_VALUE is not None:
         return float(_LAST_NEUTRAL_T2HEAVY_PERCENTILE_VALUE)
 
-    n_valid = n_le_real = 0
-    for sim_seed in range(NEUTRAL_PERCENTILE_MAX_SIMS):
-        A_fin = _simulate_neutral_final_A_traits_array(
-            initial_traits_arr, events, mrate, mscale, sim_seed
+    n_valid = n_lt_real = 0
+    for sim_seed in range(EXCHANGE_NEUTRAL_PERCENTILE_SIMS):
+        A_at_metab = _simulate_neutral_final_A_traits_array(
+            initial_traits_arr, events_for_tasks, mrate, mscale, sim_seed
         )
         t1s, t2s = synthetic_task1_task2_from_pooled_metabolites_coupled(
-            A_fin, metab1env, metab2env, inv_mod
+            A_at_metab, metab1env, metab2env, inv_mod
         )
         nv = float(t2_percent_fn(t1s, t2s))
         if not np.isfinite(nv):
             continue
         n_valid += 1
         if nv < real_val:
-            n_le_real += 1
-        if n_valid >= NEUTRAL_PERCENTILE_MIN_SIMS:
-            p = n_le_real / n_valid
-            ci = 100.0 * 1.96 * np.sqrt(max(p * (1.0 - p), 0.0) / n_valid)
-            if ci <= NEUTRAL_PERCENTILE_TARGET_CI_PCT:
-                break
+            n_lt_real += 1
 
-    out = float(100.0 * n_le_real / n_valid) if n_valid > 0 else np.nan
+    out = float(100.0 * n_lt_real / n_valid) if n_valid > 0 else np.nan
     _LAST_NEUTRAL_T2HEAVY_PERCENTILE_KEY = key
     _LAST_NEUTRAL_T2HEAVY_PERCENTILE_VALUE = out
     return out

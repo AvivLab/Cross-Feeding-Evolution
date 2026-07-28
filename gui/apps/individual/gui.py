@@ -44,6 +44,7 @@ from gui.common.simulation_settings import (
     NO_DEATH,
     normalize_simulation_params,
     any_constant_probability_mode,
+    apply_death_dup_flow_toggle_ui,
     resolve_constant_probability,
 )
 from gui.common.tooltips import (
@@ -447,53 +448,43 @@ def individual_gui(win, root, model_spec, preset_params=None):
         SIMULATION_SETTINGS_TOOLTIPS["Constant Duplication Probability"],
     )
 
-    def _any_constant_probability_mode() -> bool:
-        if bool(no_death_var.get()) and bool(constant_duplication_probability_var.get()):
-            return False
-        return bool(constant_death_probability_var.get()) or bool(constant_duplication_probability_var.get())
-
-    def _refresh_binary_death_state():
-        if "Death Decay Rate" not in entries:
-            return
-        hide_decay = bool(no_death_var.get()) or bool(binary_death_at_zero_energy_var.get()) or bool(
-            constant_death_probability_var.get()
+    def _constant_probability_mode_active() -> bool:
+        return any_constant_probability_mode(
+            {
+                NO_DEATH: bool(no_death_var.get()),
+                CONSTANT_DEATH_PROBABILITY: bool(constant_death_probability_var.get()),
+                CONSTANT_DUPLICATION_PROBABILITY: bool(constant_duplication_probability_var.get()),
+            }
         )
-        _set_param_row_visible("Death Decay Rate", not hide_decay)
 
-    def _refresh_constant_death_state():
-        if bool(no_death_var.get()):
-            if bool(constant_death_probability_var.get()):
-                constant_death_probability_var.set(False)
-            constant_death_probability_cb.configure(state="disabled")
-        else:
-            constant_death_probability_cb.configure(state="normal")
-        if bool(constant_death_probability_var.get()):
-            if bool(no_death_var.get()):
-                no_death_var.set(False)
-            no_death_cb.configure(state="disabled")
-        else:
-            no_death_cb.configure(state="normal")
-        _refresh_binary_death_state()
+    _death_dup_flow_reconciling = {"active": False}
 
-    def _refresh_constant_duplication_state():
-        if bool(no_death_var.get()) and bool(constant_duplication_probability_var.get()) and (not bool(enable_chemostat_flow_var.get())):
-            constant_duplication_probability_var.set(False)
-        if bool(no_death_var.get()) and (not bool(enable_chemostat_flow_var.get())):
-            constant_duplication_probability_cb.configure(state="disabled")
-        else:
-            constant_duplication_probability_cb.configure(state="normal")
-        constant_on = bool(constant_duplication_probability_var.get())
-        for name in ("Duplication Sigmoid Midpoint", "Duplication Sigmoid Intensity"):
-            if name in entries:
-                _set_param_row_visible(name, not constant_on)
-        if CONSTANT_PROBABILITY in entries:
-            _set_param_row_visible(CONSTANT_PROBABILITY, _any_constant_probability_mode())
-
-    def _refresh_death_dup_rate_visibility():
-        if no_death_var.get() and constant_death_probability_var.get():
-            constant_death_probability_var.set(False)
-        _refresh_constant_death_state()
-        _refresh_constant_duplication_state()
+    def _refresh_death_dup_rate_visibility(*, prefer: str = ""):
+        """Apply order-independent death/dup/flow constraints, then sync param visibility."""
+        if _death_dup_flow_reconciling["active"]:
+            return
+        _death_dup_flow_reconciling["active"] = True
+        try:
+            visibility = apply_death_dup_flow_toggle_ui(
+                no_death_var=no_death_var,
+                constant_death_probability_var=constant_death_probability_var,
+                constant_duplication_probability_var=constant_duplication_probability_var,
+                enable_chemostat_flow_var=enable_chemostat_flow_var,
+                no_death_checkbox=no_death_cb,
+                constant_death_checkbox=constant_death_probability_cb,
+                constant_duplication_checkbox=constant_duplication_probability_cb,
+                binary_death_at_zero_energy=bool(binary_death_at_zero_energy_var.get()),
+                prefer=prefer,
+            )
+            if "Death Decay Rate" in entries:
+                _set_param_row_visible("Death Decay Rate", not visibility.hide_death_decay_rate)
+            for name in ("Duplication Sigmoid Midpoint", "Duplication Sigmoid Intensity"):
+                if name in entries:
+                    _set_param_row_visible(name, not visibility.hide_duplication_sigmoid)
+            if CONSTANT_PROBABILITY in entries:
+                _set_param_row_visible(CONSTANT_PROBABILITY, visibility.show_constant_probability)
+        finally:
+            _death_dup_flow_reconciling["active"] = False
 
     _refresh_death_dup_rate_visibility()
 
@@ -514,7 +505,7 @@ def individual_gui(win, root, model_spec, preset_params=None):
         _set_param_row_visible("Flow Percentage", show)
         if not show and "Flow Percentage" in entry_vars:
             entry_vars["Flow Percentage"].set("0.0")
-        _refresh_constant_duplication_state()
+        _refresh_death_dup_rate_visibility()
         # Called during early UI init before update_probability_plot is defined.
         try:
             update_probability_plot()
@@ -611,7 +602,6 @@ def individual_gui(win, root, model_spec, preset_params=None):
     enable_m1_facilitated_diffusion_var.trace_add("write", lambda *_: refresh_diffusion_related_param_visibility())
     m1_porin_diffusion_var.trace_add("write", lambda *_: refresh_diffusion_related_param_visibility())
     enable_m2_diffusion_var.trace_add("write", lambda *_: refresh_diffusion_related_param_visibility())
-    enable_chemostat_flow_var.trace_add("write", lambda *_: refresh_diffusion_related_param_visibility())
     refresh_diffusion_related_param_visibility()
 
     def refresh_facilitation_param_visibility():
@@ -1239,7 +1229,7 @@ def individual_gui(win, root, model_spec, preset_params=None):
 
                     percentile = np.nan
                     if np.isfinite(current_val):
-                        percentile = float(100.0 * np.mean(arr <= current_val))
+                        percentile = float(100.0 * np.mean(arr < current_val))
 
                     bins = min(80, max(20, int(np.sqrt(arr.size) * 2)))
                     seed_sweep_ax.clear()
@@ -1486,14 +1476,20 @@ def individual_gui(win, root, model_spec, preset_params=None):
             # Leave it as-is if params invalid/missing
             pass
 
-    def _refresh_death_dup_rate_ui():
-        _refresh_death_dup_rate_visibility()
+    def _refresh_death_dup_rate_ui(*, prefer: str = ""):
+        _refresh_death_dup_rate_visibility(prefer=prefer)
         update_probability_plot()
 
-    binary_death_at_zero_energy_var.trace_add("write", lambda *_: _refresh_death_dup_rate_ui())
-    no_death_var.trace_add("write", lambda *_: _refresh_death_dup_rate_ui())
-    constant_death_probability_var.trace_add("write", lambda *_: _refresh_death_dup_rate_ui())
-    constant_duplication_probability_var.trace_add("write", lambda *_: _refresh_death_dup_rate_ui())
+    binary_death_at_zero_energy_var.trace_add(
+        "write", lambda *_: _refresh_death_dup_rate_ui()
+    )
+    no_death_var.trace_add("write", lambda *_: _refresh_death_dup_rate_ui(prefer="no_death"))
+    constant_death_probability_var.trace_add(
+        "write", lambda *_: _refresh_death_dup_rate_ui(prefer="constant_death")
+    )
+    constant_duplication_probability_var.trace_add(
+        "write", lambda *_: _refresh_death_dup_rate_ui()
+    )
 
     def update_investment_plot():
         """Plot the current investment function y=f(x) on x in [0,1]."""
@@ -1567,7 +1563,7 @@ def individual_gui(win, root, model_spec, preset_params=None):
                 continue
             if name in ("Duplication Sigmoid Midpoint", "Duplication Sigmoid Intensity") and constant_duplication_probability_var.get():
                 continue
-            if name == CONSTANT_PROBABILITY and not _any_constant_probability_mode():
+            if name == CONSTANT_PROBABILITY and not _constant_probability_mode_active():
                 continue
             if name == "Investment Modifier" and independent_traits_var.get():
                 continue
@@ -1618,7 +1614,7 @@ def individual_gui(win, root, model_spec, preset_params=None):
         params[NO_DEATH] = bool(no_death_var.get())
         params[CONSTANT_DEATH_PROBABILITY] = bool(constant_death_probability_var.get())
         params[CONSTANT_DUPLICATION_PROBABILITY] = bool(constant_duplication_probability_var.get())
-        if _any_constant_probability_mode() and CONSTANT_PROBABILITY not in params:
+        if _constant_probability_mode_active() and CONSTANT_PROBABILITY not in params:
             params[CONSTANT_PROBABILITY] = 0.5
         if not params[ENABLE_CHEMOSTAT_FLOW]:
             params[FLOW_PERCENTAGE] = 0.0

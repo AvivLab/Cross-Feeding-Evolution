@@ -436,28 +436,32 @@ def run_post_loaded_fixed_refreshes(
     refresh_initial_energy_state_fn: Any,
     refresh_intermediate_costs_state_fn: Any,
     refresh_acetate_addition_state_fn: Any,
+    refresh_death_dup_state_fn: Any = None,
 ) -> None:
-    """Run UI refresh sequence after applying loaded fixed params."""
+    """
+    Run UI refresh sequence after applying loaded fixed params.
+
+    Callers should pass feature refresh lambdas that update ``hidden_params`` only
+    (``rebuild_param_tables=False`` / equivalent). This function rebuilds the
+    optimizable/fixed tables once at the end to avoid multi-destroy flashes.
+    """
     refresh_diffusion_mutation_state_fn()
+    for fn in (
+        refresh_death_dup_state_fn,
+        refresh_chemostat_flow_state_fn,
+        refresh_initial_energy_state_fn,
+        refresh_intermediate_costs_state_fn,
+        refresh_acetate_addition_state_fn,
+    ):
+        if fn is None:
+            continue
+        try:
+            fn()
+        except Exception:
+            pass
     refresh_optimizable_params_fn()
     refresh_fixed_params_fn()
     refresh_metric_options_fn()
-    try:
-        refresh_chemostat_flow_state_fn()
-    except Exception:
-        pass
-    try:
-        refresh_initial_energy_state_fn()
-    except Exception:
-        pass
-    try:
-        refresh_intermediate_costs_state_fn()
-    except Exception:
-        pass
-    try:
-        refresh_acetate_addition_state_fn()
-    except Exception:
-        pass
 
 
 def optimization_goal_from_dataset(dataset: Dict[str, Any], goal_fallback: str = "Maximize") -> str:

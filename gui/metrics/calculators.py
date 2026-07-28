@@ -195,7 +195,8 @@ def calc_trait_entropy_neutral_perc(inp: SweepMetricInputs) -> float:
     return float(ent_p)
 
 
-def _parse_metab_after_inflow(mpair) -> Optional[tuple]:
+def parse_metab_after_inflow(mpair) -> Optional[tuple]:
+    """Parse a final-generation after-inflow (m1, m2) pair; None if invalid."""
     if mpair is None:
         return None
     if not isinstance(mpair, (list, tuple)) or len(mpair) < 2:
@@ -207,6 +208,10 @@ def _parse_metab_after_inflow(mpair) -> Optional[tuple]:
     if not np.isfinite(m1e) or not np.isfinite(m2e):
         return None
     return m1e, m2e
+
+
+# Backward-compatible private alias.
+_parse_metab_after_inflow = parse_metab_after_inflow
 
 
 def _neutral_perc_task2_pool_metric(
@@ -226,7 +231,7 @@ def _neutral_perc_task2_pool_metric(
         inp.task2_final,
     ):
         return np.nan
-    mpair = _parse_metab_after_inflow(inp.metabolite_environment_after_inflow_final_generation)
+    mpair = parse_metab_after_inflow(inp.metabolite_environment_after_inflow_final_generation)
     if mpair is None:
         print(
             f"[metrics] ERROR: {error_label} — metabolite_environment_after_inflow_final_generation "

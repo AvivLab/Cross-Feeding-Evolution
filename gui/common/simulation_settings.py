@@ -34,6 +34,7 @@ CONSTANT_PROBABILITY = "Constant Probability"
 INTERNAL_SIMULATION_RUNTIME_PARAM_KEYS: Tuple[str, ...] = (
     "keep_optional_final_arrays",
     "store_history",
+    "store_metabolite_environment_after_inflow_history",
     "minimal_tracking",
     "tracking_metric_names",
     "tracking_metric_name",
@@ -105,10 +106,39 @@ def expected_monte_carlo_exported_toggle_keys() -> Tuple[str, ...]:
 
 
 def apply_toggles_to_monte_carlo_panel(panel: Any, toggles: Mapping[str, Any]) -> None:
-    """Restore simulation toggles from a ``primary_toggles`` / ``neutral_toggles`` dict."""
+    """Restore simulation toggles from a ``primary_toggles`` / ``neutral_toggles`` dict.
+
+    Merges onto the panel's current toggle state, runs ``normalize_simulation_params``
+    (so No Death vs Constant Death and No Death+Const Dup vs Flow agree with core),
+    then writes the reconciled flags once. Avoids last-write-wins from per-toggle traces.
+    """
+    draft: Dict[str, Any] = {}
+    for binding in MONTE_CARLO_PANEL_TOGGLE_BINDINGS:
+        var = getattr(panel, binding.panel_attr, None)
+        if var is None:
+            continue
+        try:
+            draft[binding.param_key] = bool(var.get())
+        except Exception:
+            draft[binding.param_key] = False
     for binding in MONTE_CARLO_PANEL_TOGGLE_BINDINGS:
         if binding.param_key in toggles:
-            getattr(panel, binding.panel_attr).set(_coerce_bool(toggles[binding.param_key], False))
+            draft[binding.param_key] = _coerce_bool(toggles[binding.param_key], False)
+
+    normalized = normalize_simulation_params(dict(draft))
+    for binding in MONTE_CARLO_PANEL_TOGGLE_BINDINGS:
+        var = getattr(panel, binding.panel_attr, None)
+        if var is None:
+            continue
+        desired = _coerce_bool(normalized.get(binding.param_key, draft.get(binding.param_key, False)), False)
+        try:
+            if bool(var.get()) != desired:
+                var.set(desired)
+        except Exception:
+            try:
+                var.set(desired)
+            except Exception:
+                pass
 
 
 def any_constant_probability_mode(toggles: Mapping[str, Any]) -> bool:
@@ -129,6 +159,185 @@ def both_constant_death_and_duplication(toggles: Mapping[str, Any]) -> bool:
     return _coerce_bool(toggles.get(CONSTANT_DEATH_PROBABILITY, False)) and _coerce_bool(
         toggles.get(CONSTANT_DUPLICATION_PROBABILITY, False)
     )
+
+
+@dataclass(frozen=True)
+class ReconciledDeathDupFlowToggles:
+    """Normalized death/duplication/flow toggle state and checkbox enable flags."""
+
+    no_death: bool
+    constant_death_probability: bool
+    constant_duplication_probability: bool
+    enable_chemostat_flow: bool
+    no_death_checkbox_enabled: bool
+    constant_death_checkbox_enabled: bool
+    constant_duplication_checkbox_enabled: bool
+
+
+@dataclass(frozen=True)
+class DeathDupParamVisibility:
+    """Parameter-table / entry-row visibility implied by reconciled death/dup toggles."""
+
+    hide_death_decay_rate: bool
+    show_constant_probability: bool
+    hide_duplication_sigmoid: bool
+
+
+def reconcile_death_dup_flow_toggles(
+    *,
+    no_death: bool,
+    constant_death_probability: bool,
+    constant_duplication_probability: bool,
+    enable_chemostat_flow: bool,
+    prefer: str = "",
+) -> ReconciledDeathDupFlowToggles:
+    """
+    Make death/duplication/flow toggles consistent regardless of click order.
+
+    Rules:
+    - No Death and Constant Death are mutually exclusive.
+      ``prefer="constant_death"`` keeps Constant Death; otherwise No Death wins.
+    - No Death + Constant Duplication requires Chemostat Flow.
+      If that pair is requested without flow, Constant Duplication is cleared
+      (Flow is never invented here).
+    - Checkbox enablement mirrors those constraints so invalid clicks are blocked.
+
+    Only ``prefer`` values that matter are ``"no_death"`` and ``"constant_death"``
+    (plus aliases ``"constant_death_probability"``). Other strings are ignored.
+    """
+    no_death_on = bool(no_death)
+    constant_death_on = bool(constant_death_probability)
+    constant_dup_on = bool(constant_duplication_probability)
+    flow_on = bool(enable_chemostat_flow)
+    prefer_key = str(prefer or "").strip().lower()
+
+    if no_death_on and constant_death_on:
+        if prefer_key in {"constant_death", "constant_death_probability"}:
+            no_death_on = False
+        else:
+            constant_death_on = False
+
+    if no_death_on and constant_dup_on and (not flow_on):
+        constant_dup_on = False
+
+    return ReconciledDeathDupFlowToggles(
+        no_death=no_death_on,
+        constant_death_probability=constant_death_on,
+        constant_duplication_probability=constant_dup_on,
+        enable_chemostat_flow=flow_on,
+        no_death_checkbox_enabled=not constant_death_on,
+        constant_death_checkbox_enabled=not no_death_on,
+        constant_duplication_checkbox_enabled=not (no_death_on and (not flow_on)),
+    )
+
+
+def apply_death_dup_flow_toggle_ui(
+    *,
+    no_death_var: Any,
+    constant_death_probability_var: Any,
+    constant_duplication_probability_var: Any,
+    enable_chemostat_flow_var: Any,
+    no_death_checkbox: Any,
+    constant_death_checkbox: Any,
+    constant_duplication_checkbox: Any,
+    binary_death_at_zero_energy: bool,
+    prefer: str = "",
+) -> DeathDupParamVisibility:
+    """
+    Reconcile death/dup/flow BooleanVars, sync checkbox enablement, return param visibility.
+
+    Shared by Individual, Monte Carlo panel, and Gradient Descent so click-order rules
+    and widget state stay identical.
+    """
+    reconciled = reconcile_death_dup_flow_toggles(
+        no_death=bool(no_death_var.get()),
+        constant_death_probability=bool(constant_death_probability_var.get()),
+        constant_duplication_probability=bool(constant_duplication_probability_var.get()),
+        enable_chemostat_flow=bool(enable_chemostat_flow_var.get()),
+        prefer=prefer,
+    )
+    if bool(no_death_var.get()) != reconciled.no_death:
+        no_death_var.set(reconciled.no_death)
+    if bool(constant_death_probability_var.get()) != reconciled.constant_death_probability:
+        constant_death_probability_var.set(reconciled.constant_death_probability)
+    if bool(constant_duplication_probability_var.get()) != reconciled.constant_duplication_probability:
+        constant_duplication_probability_var.set(reconciled.constant_duplication_probability)
+
+    for checkbox, enabled in (
+        (no_death_checkbox, reconciled.no_death_checkbox_enabled),
+        (constant_death_checkbox, reconciled.constant_death_checkbox_enabled),
+        (constant_duplication_checkbox, reconciled.constant_duplication_checkbox_enabled),
+    ):
+        try:
+            checkbox.configure(state=("normal" if enabled else "disabled"))
+        except Exception:
+            pass
+
+    return DeathDupParamVisibility(
+        hide_death_decay_rate=bool(
+            reconciled.no_death
+            or binary_death_at_zero_energy
+            or reconciled.constant_death_probability
+        ),
+        show_constant_probability=any_constant_probability_mode(
+            {
+                NO_DEATH: reconciled.no_death,
+                CONSTANT_DEATH_PROBABILITY: reconciled.constant_death_probability,
+                CONSTANT_DUPLICATION_PROBABILITY: reconciled.constant_duplication_probability,
+            }
+        ),
+        hide_duplication_sigmoid=bool(reconciled.constant_duplication_probability),
+    )
+
+
+def sync_death_dup_hidden_params(
+    hidden_params: Any,
+    visibility: DeathDupParamVisibility,
+    *,
+    param_fix_checkboxes: Optional[Mapping[str, Any]] = None,
+    force_fix_constant_probability: bool = False,
+) -> None:
+    """Update a Monte Carlo / GD ``hidden_params`` set from death/dup visibility."""
+    sync_optional_param_row_visibility(
+        hidden_params,
+        "Death Decay Rate",
+        visible=not visibility.hide_death_decay_rate,
+    )
+    sync_optional_param_row_visibility(
+        hidden_params,
+        CONSTANT_PROBABILITY,
+        visible=visibility.show_constant_probability,
+        param_fix_checkboxes=param_fix_checkboxes,
+        force_fix=force_fix_constant_probability,
+    )
+    if visibility.hide_duplication_sigmoid:
+        hidden_params.add("Duplication Sigmoid Midpoint")
+        hidden_params.add("Duplication Sigmoid Intensity")
+    else:
+        hidden_params.discard("Duplication Sigmoid Midpoint")
+        hidden_params.discard("Duplication Sigmoid Intensity")
+
+
+def sync_optional_param_row_visibility(
+    hidden_params: Any,
+    param_name: str,
+    *,
+    visible: bool,
+    param_fix_checkboxes: Optional[Mapping[str, Any]] = None,
+    force_fix: bool = False,
+) -> None:
+    """Show/hide one optimizable/fixed param row; optionally force it Fixed when shown."""
+    if visible:
+        hidden_params.discard(param_name)
+        if force_fix and param_fix_checkboxes is not None:
+            fix_var = param_fix_checkboxes.get(param_name)
+            if fix_var is not None:
+                try:
+                    fix_var.set(True)
+                except Exception:
+                    pass
+    else:
+        hidden_params.add(param_name)
 
 
 def _clamp_unit_interval(value: float) -> float:
@@ -201,11 +410,6 @@ def simulation_toggles_from_ui_state(ui_state: Mapping[str, Any]) -> Dict[str, b
         if binding.ui_state_key and binding.ui_state_key in ui_state:
             out[binding.param_key] = _coerce_bool(ui_state[binding.ui_state_key], False)
     return out
-
-
-def monte_carlo_panel_toggle_watch_vars(panel: Any) -> Tuple[Any, ...]:
-    """BooleanVars that should trigger primary→neutral sync when ``match_neutral_to_primary`` is on."""
-    return tuple(getattr(panel, b.panel_attr) for b in MONTE_CARLO_PANEL_TOGGLE_BINDINGS) + (panel.silent_mode_var,)
 
 
 def _coerce_bool(value: Any, default: bool = False) -> bool:
@@ -286,16 +490,16 @@ def normalize_simulation_params(params: Dict[str, Any]) -> Dict[str, Any]:
     out[HOMOGENEOUS_POPULATION] = _coerce_bool(out.get(HOMOGENEOUS_POPULATION, False))
     out[INDEPENDENT_TRAITS] = _coerce_bool(out.get(INDEPENDENT_TRAITS, False))
     out[BINARY_DEATH_AT_ZERO_ENERGY] = _coerce_bool(out.get(BINARY_DEATH_AT_ZERO_ENERGY, False))
-    out[NO_DEATH] = _coerce_bool(out.get(NO_DEATH, False))
-    out[CONSTANT_DEATH_PROBABILITY] = _coerce_bool(out.get(CONSTANT_DEATH_PROBABILITY, False))
-    if out[NO_DEATH]:
-        # No Death and Constant Death are mutually exclusive; No Death takes precedence.
-        out[CONSTANT_DEATH_PROBABILITY] = False
-    out[CONSTANT_DUPLICATION_PROBABILITY] = _coerce_bool(out.get(CONSTANT_DUPLICATION_PROBABILITY, False))
-    if out[NO_DEATH] and out[CONSTANT_DUPLICATION_PROBABILITY] and (not out[ENABLE_CHEMOSTAT_FLOW]):
-        # No Death + Constant Duplication is only meaningful when flow is enabled
-        # (duplication is derived from chemostat outflow in this mode).
-        out[CONSTANT_DUPLICATION_PROBABILITY] = False
+    reconciled = reconcile_death_dup_flow_toggles(
+        no_death=_coerce_bool(out.get(NO_DEATH, False)),
+        constant_death_probability=_coerce_bool(out.get(CONSTANT_DEATH_PROBABILITY, False)),
+        constant_duplication_probability=_coerce_bool(out.get(CONSTANT_DUPLICATION_PROBABILITY, False)),
+        enable_chemostat_flow=_coerce_bool(out.get(ENABLE_CHEMOSTAT_FLOW, False)),
+    )
+    out[NO_DEATH] = reconciled.no_death
+    out[CONSTANT_DEATH_PROBABILITY] = reconciled.constant_death_probability
+    out[CONSTANT_DUPLICATION_PROBABILITY] = reconciled.constant_duplication_probability
+    out[ENABLE_CHEMOSTAT_FLOW] = reconciled.enable_chemostat_flow
     if any_constant_probability_mode(out):
         shared = resolve_constant_probability(out)
         assert shared is not None

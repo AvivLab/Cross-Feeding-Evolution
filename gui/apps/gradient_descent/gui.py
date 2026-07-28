@@ -22,8 +22,6 @@ import time
 import os
 import re
 import sys
-import platform
-import warnings
 from concurrent.futures import ThreadPoolExecutor
 from gui.common.colors import OKABE_ITO, DEFAULT_HEATMAP_CMAP
 from gui.apps.gradient_descent.runtime import (
@@ -116,9 +114,11 @@ from gui.metrics import (
 from gui.common.seed_policy import choose_launch_seed, descent_seed_for_run, parse_optional_seed, replicate_seed_for_run
 from gui.common.simulation_settings import (
     NO_DEATH,
-    both_constant_death_and_duplication,
+    apply_death_dup_flow_toggle_ui,
     normalize_simulation_params,
     simulation_toggles_from_ui_state,
+    sync_death_dup_hidden_params,
+    sync_optional_param_row_visibility,
 )
 from gui.common.tooltips import (
     PARAMETER_TOOLTIPS, 
@@ -1425,24 +1425,23 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
     enable_initial_energy_check.grid(row=9, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_initial_energy_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Initial Energy"])
 
-    def _refresh_initial_energy_state(*, preserve_fix_checkbox: bool = False):
+    def _refresh_initial_energy_state(*, preserve_fix_checkbox: bool = False, rebuild_param_tables: bool = True):
         # Show/hide "Initial Energy" in the optimizable/fixed parameter table
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Initial Energy",
+            visible=bool(enable_initial_energy_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_initial_energy_var.get():
-            hidden_params.discard("Initial Energy")
-            # Default new sessions to fixed. After loading a dataset, preserve_fix_checkbox=True
-            # so param_ui_state is not overwritten.
-            if (not preserve_fix_checkbox) and ("Initial Energy" in param_fix_checkboxes):
-                param_fix_checkboxes["Initial Energy"].set(True)
-            # Ensure the table has a sensible default if blank
             if "Initial Energy" in param_initial_entries and not param_initial_entries["Initial Energy"].get().strip():
                 param_initial_entries["Initial Energy"].insert(0, "0.0")
             if "Initial Energy" in fixed_entries and not fixed_entries["Initial Energy"].get().strip():
                 fixed_entries["Initial Energy"].insert(0, "0.0")
-        else:
-            hidden_params.add("Initial Energy")
-
-        refresh_optimizable_params()
-        refresh_fixed_params()
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     _initial_energy_write_trace_ids: list[str] = []
 
@@ -1477,26 +1476,33 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
     enable_chemostat_flow_check.grid(row=10, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_chemostat_flow_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Chemostat Flow"])
 
-    def _refresh_chemostat_flow_state(*, preserve_fix_checkbox: bool = False):
+    def _refresh_chemostat_flow_state(*, preserve_fix_checkbox: bool = False, rebuild_param_tables: bool = True):
         # Show/hide "Flow Percentage" in the optimizable/fixed parameter table
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Flow Percentage",
+            visible=bool(enable_chemostat_flow_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_chemostat_flow_var.get():
-            hidden_params.discard("Flow Percentage")
-            if (not preserve_fix_checkbox) and ("Flow Percentage" in param_fix_checkboxes):
-                param_fix_checkboxes["Flow Percentage"].set(True)
             if "Flow Percentage" in param_initial_entries and not param_initial_entries["Flow Percentage"].get().strip():
                 param_initial_entries["Flow Percentage"].insert(0, "0.0")
             if "Flow Percentage" in fixed_entries and not fixed_entries["Flow Percentage"].get().strip():
                 fixed_entries["Flow Percentage"].insert(0, "0.0")
-        else:
-            hidden_params.add("Flow Percentage")
-        refresh_optimizable_params()
-        refresh_fixed_params()
-        # Keep No Death / Constant Duplication relationship in sync when flow changes.
+        # Death/dup may change hidden_params when flow toggles; rebuild once below.
         try:
-            _refresh_constant_duplication_state(preserve_fix_checkbox=preserve_fix_checkbox)
+            _refresh_death_dup_constant_params_state(
+                preserve_fix_checkbox=preserve_fix_checkbox,
+                prefer="",
+                rebuild_param_tables=False,
+            )
         except NameError:
-            # Early init: callback is defined before death/dup refresh helpers exist.
+            # Early init: death/dup refresh helpers are defined later.
             pass
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     _chemostat_flow_write_trace_ids: list[str] = []
 
@@ -1532,24 +1538,27 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
     enable_intermediate_costs_check.grid(row=11, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_intermediate_costs_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Intermediate Costs"])
 
-    def _refresh_intermediate_costs_state(*, preserve_fix_checkbox: bool = False):
+    def _refresh_intermediate_costs_state(*, preserve_fix_checkbox: bool = False, rebuild_param_tables: bool = True):
         if m2_diffusion_var.get():
             enable_intermediate_costs_check.configure(state="normal")
         else:
             enable_intermediate_costs_var.set(False)
             enable_intermediate_costs_check.configure(state="disabled")
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Intermediate Costs",
+            visible=bool(enable_intermediate_costs_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_intermediate_costs_var.get():
-            hidden_params.discard("Intermediate Costs")
-            if (not preserve_fix_checkbox) and ("Intermediate Costs" in param_fix_checkboxes):
-                param_fix_checkboxes["Intermediate Costs"].set(True)
             if "Intermediate Costs" in param_initial_entries and not param_initial_entries["Intermediate Costs"].get().strip():
                 param_initial_entries["Intermediate Costs"].insert(0, "0.0")
             if "Intermediate Costs" in fixed_entries and not fixed_entries["Intermediate Costs"].get().strip():
                 fixed_entries["Intermediate Costs"].insert(0, "0.0")
-        else:
-            hidden_params.add("Intermediate Costs")
-        refresh_optimizable_params()
-        refresh_fixed_params()
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     _intermediate_costs_write_trace_ids: list[str] = []
 
@@ -1590,19 +1599,22 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
     enable_acetate_addition_check.grid(row=12, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_acetate_addition_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Acetate Addition"])
 
-    def _refresh_acetate_addition_state(*, preserve_fix_checkbox: bool = False):
+    def _refresh_acetate_addition_state(*, preserve_fix_checkbox: bool = False, rebuild_param_tables: bool = True):
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Average In_Flow (Acetate)",
+            visible=bool(enable_acetate_addition_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_acetate_addition_var.get():
-            hidden_params.discard("Average In_Flow (Acetate)")
-            if (not preserve_fix_checkbox) and ("Average In_Flow (Acetate)" in param_fix_checkboxes):
-                param_fix_checkboxes["Average In_Flow (Acetate)"].set(True)
             if "Average In_Flow (Acetate)" in param_initial_entries and not param_initial_entries["Average In_Flow (Acetate)"].get().strip():
                 param_initial_entries["Average In_Flow (Acetate)"].insert(0, "0.0")
             if "Average In_Flow (Acetate)" in fixed_entries and not fixed_entries["Average In_Flow (Acetate)"].get().strip():
                 fixed_entries["Average In_Flow (Acetate)"].insert(0, "0.0")
-        else:
-            hidden_params.add("Average In_Flow (Acetate)")
-        refresh_optimizable_params()
-        refresh_fixed_params()
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     _acetate_addition_write_trace_ids: list[str] = []
 
@@ -1669,66 +1681,51 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
         SIMULATION_SETTINGS_TOOLTIPS["Constant Duplication Probability"],
     )
 
-    def _refresh_death_dup_constant_params_state(*, preserve_fix_checkbox: bool = False):
-        if no_death_var.get() and constant_death_probability_var.get():
-            constant_death_probability_var.set(False)
-        constant_death = bool(constant_death_probability_var.get())
-        constant_dup = bool(constant_duplication_probability_var.get())
-        no_death = bool(no_death_var.get())
-        any_constant = (constant_death or constant_dup) and not (no_death and constant_dup)
+    _death_dup_flow_reconciling = {"active": False}
 
-        if no_death or binary_death_at_zero_energy_var.get() or constant_death:
-            hidden_params.add("Death Decay Rate")
-        else:
-            hidden_params.discard("Death Decay Rate")
-
-        if any_constant:
-            hidden_params.discard("Constant Probability")
-            if (not preserve_fix_checkbox) and ("Constant Probability" in param_fix_checkboxes):
-                param_fix_checkboxes["Constant Probability"].set(True)
-        else:
-            hidden_params.add("Constant Probability")
-
-        if constant_dup:
-            hidden_params.add("Duplication Sigmoid Midpoint")
-            hidden_params.add("Duplication Sigmoid Intensity")
-        else:
-            hidden_params.discard("Duplication Sigmoid Midpoint")
-            hidden_params.discard("Duplication Sigmoid Intensity")
-
-        if not preserve_fix_checkbox:
-            refresh_optimizable_params()
-            refresh_fixed_params()
+    def _refresh_death_dup_constant_params_state(
+        *,
+        preserve_fix_checkbox: bool = False,
+        prefer: str = "",
+        rebuild_param_tables: bool = True,
+    ):
+        if _death_dup_flow_reconciling["active"]:
+            return
+        _death_dup_flow_reconciling["active"] = True
+        try:
+            visibility = apply_death_dup_flow_toggle_ui(
+                no_death_var=no_death_var,
+                constant_death_probability_var=constant_death_probability_var,
+                constant_duplication_probability_var=constant_duplication_probability_var,
+                enable_chemostat_flow_var=enable_chemostat_flow_var,
+                no_death_checkbox=no_death_check,
+                constant_death_checkbox=constant_death_probability_check,
+                constant_duplication_checkbox=constant_duplication_probability_check,
+                binary_death_at_zero_energy=bool(binary_death_at_zero_energy_var.get()),
+                prefer=prefer,
+            )
+            sync_death_dup_hidden_params(
+                hidden_params,
+                visibility,
+                param_fix_checkboxes=param_fix_checkboxes,
+                force_fix_constant_probability=not preserve_fix_checkbox,
+            )
+            if rebuild_param_tables:
+                refresh_optimizable_params()
+                refresh_fixed_params()
+        finally:
+            _death_dup_flow_reconciling["active"] = False
 
     def _refresh_binary_death_state(*, preserve_fix_checkbox: bool = False):
         _refresh_death_dup_constant_params_state(preserve_fix_checkbox=preserve_fix_checkbox)
 
-    def _refresh_constant_death_state(*, preserve_fix_checkbox: bool = False):
-        if bool(no_death_var.get()):
-            if bool(constant_death_probability_var.get()):
-                constant_death_probability_var.set(False)
-            constant_death_probability_check.configure(state="disabled")
-        else:
-            constant_death_probability_check.configure(state="normal")
-        if bool(constant_death_probability_var.get()):
-            if bool(no_death_var.get()):
-                no_death_var.set(False)
-            no_death_check.configure(state="disabled")
-        else:
-            no_death_check.configure(state="normal")
-        _refresh_death_dup_constant_params_state(preserve_fix_checkbox=preserve_fix_checkbox)
+    def _refresh_constant_death_state(*, preserve_fix_checkbox: bool = False, prefer: str = "constant_death"):
+        _refresh_death_dup_constant_params_state(
+            preserve_fix_checkbox=preserve_fix_checkbox,
+            prefer=prefer,
+        )
 
     def _refresh_constant_duplication_state(*, preserve_fix_checkbox: bool = False):
-        if (
-            bool(no_death_var.get())
-            and bool(constant_duplication_probability_var.get())
-            and (not bool(enable_chemostat_flow_var.get()))
-        ):
-            constant_duplication_probability_var.set(False)
-        if bool(no_death_var.get()) and (not bool(enable_chemostat_flow_var.get())):
-            constant_duplication_probability_check.configure(state="disabled")
-        else:
-            constant_duplication_probability_check.configure(state="normal")
         _refresh_death_dup_constant_params_state(preserve_fix_checkbox=preserve_fix_checkbox)
 
     _binary_death_write_trace_ids: list[str] = []
@@ -1763,7 +1760,7 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
         _disconnect_binary_death_write_traces()
 
         def _on_binary_death_write(*_):
-            _refresh_constant_death_state(preserve_fix_checkbox=False)
+            _refresh_binary_death_state(preserve_fix_checkbox=False)
 
         _binary_death_write_trace_ids.append(
             binary_death_at_zero_energy_var.trace_add("write", _on_binary_death_write)
@@ -1783,7 +1780,7 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
         _disconnect_no_death_write_traces()
 
         def _on_no_death_write(*_):
-            _refresh_constant_death_state(preserve_fix_checkbox=False)
+            _refresh_constant_death_state(preserve_fix_checkbox=False, prefer="no_death")
 
         _no_death_write_trace_ids.append(
             no_death_var.trace_add("write", _on_no_death_write)
@@ -5602,52 +5599,66 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
             reset_deleted_point_stats(deleted_point_stats)
 
             # Restore UI settings if present (new datasets)
-            restored_ui_state = restore_ui_state(
-                dataset=dataset,
-                entry_by_key={
-                    "learning_rate": learning_rate_entry,
-                    "max_iterations": max_iterations_entry,
-                    "convergence_threshold": convergence_threshold_entry,
-                    "gradient_step": gradient_step_entry,
-                    "num_starts": num_starts_entry,
-                    "descents_per_start": descents_per_start_entry,
-                    "storage_sample_rate": sample_rate_entry,
-                    "num_replicates": replicates_entry,
-                    "seed": seed_entry,
-                },
-                raw_var_by_key={
-                    "metric_name": metric_var,
-                    "visualization_metric_name": viz_metric_var,
-                    "visualization_metric_name_2": viz_metric2_var,
-                    "optimization_goal": opt_goal_var,
-                },
-                bool_var_by_key={
-                    "silent_mode": silent_mode_var,
-                    "homogeneous_population": homogeneous_mode_var,
-                    "independent_traits": independent_traits_var,
-                    "enable_m1_diffusion": m1_diffusion_var,
-                    "enable_m2_diffusion": m2_diffusion_var,
-                    "enable_m1_porin_diffusion": m1_porin_diffusion_var,
-                    "enable_diffusion_mutation": diffusion_mutation_var,
-                    "homogeneous_initial_diffusion_const": homogeneous_initial_diffusion_const_var,
-                    "enable_chemostat_flow": enable_chemostat_flow_var,
-                    "enable_initial_energy": enable_initial_energy_var,
-                    "enable_intermediate_costs": enable_intermediate_costs_var,
-                    "enable_acetate_addition": enable_acetate_addition_var,
-                    "binary_death_at_zero_energy": binary_death_at_zero_energy_var,
-                    "no_death": no_death_var,
-                    "constant_death_probability": constant_death_probability_var,
-                    "constant_duplication_probability": constant_duplication_probability_var,
-                    "enable_m1_facilitated_diffusion": m1_facilitation_var,
-                },
-                str_var_by_key={
-                    "full_save_folder": full_save_dir_var,
-                },
-            )
+            _disconnect_conditional_param_feature_write_traces()
+            try:
+                restored_ui_state = restore_ui_state(
+                    dataset=dataset,
+                    entry_by_key={
+                        "learning_rate": learning_rate_entry,
+                        "max_iterations": max_iterations_entry,
+                        "convergence_threshold": convergence_threshold_entry,
+                        "gradient_step": gradient_step_entry,
+                        "num_starts": num_starts_entry,
+                        "descents_per_start": descents_per_start_entry,
+                        "storage_sample_rate": sample_rate_entry,
+                        "num_replicates": replicates_entry,
+                        "seed": seed_entry,
+                    },
+                    raw_var_by_key={
+                        "metric_name": metric_var,
+                        "visualization_metric_name": viz_metric_var,
+                        "visualization_metric_name_2": viz_metric2_var,
+                        "optimization_goal": opt_goal_var,
+                    },
+                    bool_var_by_key={
+                        "silent_mode": silent_mode_var,
+                        "homogeneous_population": homogeneous_mode_var,
+                        "independent_traits": independent_traits_var,
+                        "enable_m1_diffusion": m1_diffusion_var,
+                        "enable_m2_diffusion": m2_diffusion_var,
+                        "enable_m1_porin_diffusion": m1_porin_diffusion_var,
+                        "enable_diffusion_mutation": diffusion_mutation_var,
+                        "homogeneous_initial_diffusion_const": homogeneous_initial_diffusion_const_var,
+                        "enable_chemostat_flow": enable_chemostat_flow_var,
+                        "enable_initial_energy": enable_initial_energy_var,
+                        "enable_intermediate_costs": enable_intermediate_costs_var,
+                        "enable_acetate_addition": enable_acetate_addition_var,
+                        "binary_death_at_zero_energy": binary_death_at_zero_energy_var,
+                        "no_death": no_death_var,
+                        "constant_death_probability": constant_death_probability_var,
+                        "constant_duplication_probability": constant_duplication_probability_var,
+                        "enable_m1_facilitated_diffusion": m1_facilitation_var,
+                    },
+                    str_var_by_key={
+                        "full_save_folder": full_save_dir_var,
+                    },
+                )
+            finally:
+                _connect_conditional_param_feature_write_traces()
             if restored_ui_state:
                 refresh_diffusion_mutation_state()
-                _refresh_constant_death_state(preserve_fix_checkbox=True)
-                _refresh_constant_duplication_state(preserve_fix_checkbox=True)
+                # Match normalize_simulation_params: No Death wins over Constant Death.
+                _refresh_death_dup_constant_params_state(
+                    preserve_fix_checkbox=True,
+                    prefer="",
+                    rebuild_param_tables=False,
+                )
+                _refresh_chemostat_flow_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
+                _refresh_initial_energy_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
+                _refresh_intermediate_costs_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
+                _refresh_acetate_addition_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
+                refresh_optimizable_params()
+                refresh_fixed_params()
 
             # Restore parameter checkbox/initial/min/max state if present
             restore_param_ui_state_and_fixed_values(
@@ -5714,16 +5725,25 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
                         refresh_fixed_params_fn=refresh_fixed_params,
                         refresh_metric_options_fn=refresh_metric_options,
                         refresh_chemostat_flow_state_fn=lambda: _refresh_chemostat_flow_state(
-                            preserve_fix_checkbox=True
+                            preserve_fix_checkbox=True,
+                            rebuild_param_tables=False,
                         ),
                         refresh_initial_energy_state_fn=lambda: _refresh_initial_energy_state(
-                            preserve_fix_checkbox=True
+                            preserve_fix_checkbox=True,
+                            rebuild_param_tables=False,
                         ),
                         refresh_intermediate_costs_state_fn=lambda: _refresh_intermediate_costs_state(
-                            preserve_fix_checkbox=True
+                            preserve_fix_checkbox=True,
+                            rebuild_param_tables=False,
                         ),
                         refresh_acetate_addition_state_fn=lambda: _refresh_acetate_addition_state(
-                            preserve_fix_checkbox=True
+                            preserve_fix_checkbox=True,
+                            rebuild_param_tables=False,
+                        ),
+                        refresh_death_dup_state_fn=lambda: _refresh_death_dup_constant_params_state(
+                            preserve_fix_checkbox=True,
+                            prefer="",
+                            rebuild_param_tables=False,
                         ),
                     )
             except Exception:
@@ -6439,92 +6459,97 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
                 except Exception:
                     pass
 
-            # Simulation toggles
-            if "silent_mode" in ui_state:
-                try:
-                    silent_mode_var.set(bool(ui_state["silent_mode"]))
-                except Exception:
-                    pass
-            if "homogeneous_population" in ui_state:
-                try:
-                    homogeneous_mode_var.set(bool(ui_state["homogeneous_population"]))
-                except Exception:
-                    pass
-            if "independent_traits" in ui_state:
-                try:
-                    independent_traits_var.set(bool(ui_state["independent_traits"]))
-                except Exception:
-                    pass
-            if "enable_m1_diffusion" in ui_state:
-                try:
-                    m1_diffusion_var.set(bool(ui_state["enable_m1_diffusion"]))
-                except Exception:
-                    pass
-            if "enable_m1_facilitated_diffusion" in ui_state:
-                try:
-                    m1_facilitation_var.set(bool(ui_state["enable_m1_facilitated_diffusion"]))
-                except Exception:
-                    pass
-            if "enable_m1_porin_diffusion" in ui_state:
-                try:
-                    m1_porin_diffusion_var.set(bool(ui_state["enable_m1_porin_diffusion"]))
-                except Exception:
-                    pass
-            if "enable_m2_diffusion" in ui_state:
-                try:
-                    m2_diffusion_var.set(bool(ui_state["enable_m2_diffusion"]))
-                except Exception:
-                    pass
-            if "enable_diffusion_mutation" in ui_state:
-                try:
-                    diffusion_mutation_var.set(bool(ui_state["enable_diffusion_mutation"]))
-                except Exception:
-                    pass
-            if "homogeneous_initial_diffusion_const" in ui_state:
-                try:
-                    homogeneous_initial_diffusion_const_var.set(bool(ui_state["homogeneous_initial_diffusion_const"]))
-                except Exception:
-                    pass
-            if "enable_chemostat_flow" in ui_state:
-                try:
-                    enable_chemostat_flow_var.set(bool(ui_state["enable_chemostat_flow"]))
-                except Exception:
-                    pass
-            if "enable_initial_energy" in ui_state:
-                try:
-                    enable_initial_energy_var.set(bool(ui_state["enable_initial_energy"]))
-                except Exception:
-                    pass
-            if "enable_intermediate_costs" in ui_state:
-                try:
-                    enable_intermediate_costs_var.set(bool(ui_state["enable_intermediate_costs"]))
-                except Exception:
-                    pass
-            if "enable_acetate_addition" in ui_state:
-                try:
-                    enable_acetate_addition_var.set(bool(ui_state["enable_acetate_addition"]))
-                except Exception:
-                    pass
-            if "binary_death_at_zero_energy" in ui_state:
-                try:
-                    binary_death_at_zero_energy_var.set(bool(ui_state["binary_death_at_zero_energy"]))
-                except Exception:
-                    pass
-            if "no_death" in ui_state:
-                try:
-                    no_death_var.set(bool(ui_state["no_death"]))
-                except Exception:
-                    pass
-            if "constant_death_probability" in ui_state:
-                try:
-                    constant_death_probability_var.set(bool(ui_state["constant_death_probability"]))
-                except tk.TclError:
-                    pass
-            if "constant_duplication_probability" in ui_state:
-                try:
-                    constant_duplication_probability_var.set(bool(ui_state["constant_duplication_probability"]))
-                except Exception:
-                    pass
+            # Simulation toggles (suspend feature traces so we don't force-fix /
+            # multi-rebuild while applying a bulk snapshot).
+            _disconnect_conditional_param_feature_write_traces()
+            try:
+                if "silent_mode" in ui_state:
+                    try:
+                        silent_mode_var.set(bool(ui_state["silent_mode"]))
+                    except Exception:
+                        pass
+                if "homogeneous_population" in ui_state:
+                    try:
+                        homogeneous_mode_var.set(bool(ui_state["homogeneous_population"]))
+                    except Exception:
+                        pass
+                if "independent_traits" in ui_state:
+                    try:
+                        independent_traits_var.set(bool(ui_state["independent_traits"]))
+                    except Exception:
+                        pass
+                if "enable_m1_diffusion" in ui_state:
+                    try:
+                        m1_diffusion_var.set(bool(ui_state["enable_m1_diffusion"]))
+                    except Exception:
+                        pass
+                if "enable_m1_facilitated_diffusion" in ui_state:
+                    try:
+                        m1_facilitation_var.set(bool(ui_state["enable_m1_facilitated_diffusion"]))
+                    except Exception:
+                        pass
+                if "enable_m1_porin_diffusion" in ui_state:
+                    try:
+                        m1_porin_diffusion_var.set(bool(ui_state["enable_m1_porin_diffusion"]))
+                    except Exception:
+                        pass
+                if "enable_m2_diffusion" in ui_state:
+                    try:
+                        m2_diffusion_var.set(bool(ui_state["enable_m2_diffusion"]))
+                    except Exception:
+                        pass
+                if "enable_diffusion_mutation" in ui_state:
+                    try:
+                        diffusion_mutation_var.set(bool(ui_state["enable_diffusion_mutation"]))
+                    except Exception:
+                        pass
+                if "homogeneous_initial_diffusion_const" in ui_state:
+                    try:
+                        homogeneous_initial_diffusion_const_var.set(bool(ui_state["homogeneous_initial_diffusion_const"]))
+                    except Exception:
+                        pass
+                if "enable_chemostat_flow" in ui_state:
+                    try:
+                        enable_chemostat_flow_var.set(bool(ui_state["enable_chemostat_flow"]))
+                    except Exception:
+                        pass
+                if "enable_initial_energy" in ui_state:
+                    try:
+                        enable_initial_energy_var.set(bool(ui_state["enable_initial_energy"]))
+                    except Exception:
+                        pass
+                if "enable_intermediate_costs" in ui_state:
+                    try:
+                        enable_intermediate_costs_var.set(bool(ui_state["enable_intermediate_costs"]))
+                    except Exception:
+                        pass
+                if "enable_acetate_addition" in ui_state:
+                    try:
+                        enable_acetate_addition_var.set(bool(ui_state["enable_acetate_addition"]))
+                    except Exception:
+                        pass
+                if "binary_death_at_zero_energy" in ui_state:
+                    try:
+                        binary_death_at_zero_energy_var.set(bool(ui_state["binary_death_at_zero_energy"]))
+                    except Exception:
+                        pass
+                if "no_death" in ui_state:
+                    try:
+                        no_death_var.set(bool(ui_state["no_death"]))
+                    except Exception:
+                        pass
+                if "constant_death_probability" in ui_state:
+                    try:
+                        constant_death_probability_var.set(bool(ui_state["constant_death_probability"]))
+                    except Exception:
+                        pass
+                if "constant_duplication_probability" in ui_state:
+                    try:
+                        constant_duplication_probability_var.set(bool(ui_state["constant_duplication_probability"]))
+                    except Exception:
+                        pass
+            finally:
+                _connect_conditional_param_feature_write_traces()
             refresh_diffusion_mutation_state()
 
         # Parameter checkbox/initial/min/max state
@@ -6570,29 +6595,38 @@ def gradient_descent_gui(win, root, model_spec: OptimizationModelSpec | None = N
                     except Exception:
                         pass
 
-        # Ensure dependent UI states are refreshed.
+        # Ensure dependent UI states are refreshed (one rebuild at the end).
         try:
             refresh_metric_options()
         except Exception:
             pass
         try:
-            _refresh_chemostat_flow_state(preserve_fix_checkbox=True)
+            _refresh_death_dup_constant_params_state(
+                preserve_fix_checkbox=True,
+                prefer="",
+                rebuild_param_tables=False,
+            )
         except Exception:
             pass
         try:
-            _refresh_initial_energy_state(preserve_fix_checkbox=True)
+            _refresh_chemostat_flow_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
         except Exception:
             pass
         try:
-            _refresh_intermediate_costs_state(preserve_fix_checkbox=True)
+            _refresh_initial_energy_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
         except Exception:
             pass
         try:
-            _refresh_acetate_addition_state(preserve_fix_checkbox=True)
+            _refresh_intermediate_costs_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
         except Exception:
             pass
         try:
-            _refresh_death_dup_constant_params_state(preserve_fix_checkbox=True)
+            _refresh_acetate_addition_state(preserve_fix_checkbox=True, rebuild_param_tables=False)
+        except Exception:
+            pass
+        try:
+            refresh_optimizable_params()
+            refresh_fixed_params()
         except Exception:
             pass
 

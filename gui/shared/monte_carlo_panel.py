@@ -15,8 +15,11 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from gui.common.simulation_settings import (
     CONSTANT_PROBABILITY,
     NO_DEATH,
+    apply_death_dup_flow_toggle_ui,
     normalize_simulation_params,
+    sync_death_dup_hidden_params,
     sync_monte_carlo_panel_settings,
+    sync_optional_param_row_visibility,
 )
 from gui.metrics import filter_metric_options_for_simulation_settings
 from gui.models.registry import OptimizationModelSpec
@@ -217,7 +220,9 @@ class MonteCarloGdPanel:
 
         merged = normalize_simulation_params({**numeric, **toggles})
         numeric = {k: merged[k] for k in self.param_names if k in merged}
-        return numeric, toggles
+        # Return reconciled toggle flags (same rules as core / job JSON), not raw checkbox state.
+        out_toggles = {key: merged[key] for key in toggles if key in merged}
+        return numeric, out_toggles
 
     def sync_simulation_settings_from(self, src: "MonteCarloGdPanel") -> None:
         """Copy simulation toggles from another panel (primary → neutral)."""
@@ -772,19 +777,26 @@ def build_monte_carlo_gd_panel(
     enable_initial_energy_check.grid(row=9, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_initial_energy_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Initial Energy"])
 
-    def _refresh_initial_energy_state(*, preserve_fix_checkbox: bool = False) -> None:
+    def _refresh_initial_energy_state(
+        *,
+        preserve_fix_checkbox: bool = False,
+        rebuild_param_tables: bool = True,
+    ) -> None:
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Initial Energy",
+            visible=bool(enable_initial_energy_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_initial_energy_var.get():
-            hidden_params.discard("Initial Energy")
-            if (not preserve_fix_checkbox) and ("Initial Energy" in param_fix_checkboxes):
-                param_fix_checkboxes["Initial Energy"].set(True)
             if "Initial Energy" in param_initial_entries and not param_initial_entries["Initial Energy"].get().strip():
                 param_initial_entries["Initial Energy"].insert(0, "0.0")
             if "Initial Energy" in fixed_entries and not fixed_entries["Initial Energy"].get().strip():
                 fixed_entries["Initial Energy"].insert(0, "0.0")
-        else:
-            hidden_params.add("Initial Energy")
-        refresh_optimizable_params()
-        refresh_fixed_params()
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     enable_initial_energy_var.trace_add("write", lambda *_: _refresh_initial_energy_state())
     _refresh_initial_energy_state()
@@ -798,25 +810,36 @@ def build_monte_carlo_gd_panel(
     enable_chemostat_flow_check.grid(row=10, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_chemostat_flow_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Chemostat Flow"])
 
-    def _refresh_chemostat_flow_state(*, preserve_fix_checkbox: bool = False) -> None:
+    def _refresh_chemostat_flow_state(
+        *,
+        preserve_fix_checkbox: bool = False,
+        rebuild_param_tables: bool = True,
+    ) -> None:
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Flow Percentage",
+            visible=bool(enable_chemostat_flow_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_chemostat_flow_var.get():
-            hidden_params.discard("Flow Percentage")
-            if (not preserve_fix_checkbox) and ("Flow Percentage" in param_fix_checkboxes):
-                param_fix_checkboxes["Flow Percentage"].set(True)
             if "Flow Percentage" in param_initial_entries and not param_initial_entries["Flow Percentage"].get().strip():
                 param_initial_entries["Flow Percentage"].insert(0, "0.0")
             if "Flow Percentage" in fixed_entries and not fixed_entries["Flow Percentage"].get().strip():
                 fixed_entries["Flow Percentage"].insert(0, "0.0")
-        else:
-            hidden_params.add("Flow Percentage")
-        refresh_optimizable_params()
-        refresh_fixed_params()
-        # Keep No Death / Constant Duplication relationship in sync when flow changes.
+        # Death/dup may change hidden_params when flow toggles; rebuild once at the end.
         try:
-            _refresh_constant_duplication_state(preserve_fix_checkbox=preserve_fix_checkbox)
+            _refresh_death_dup_constant_params_state(
+                preserve_fix_checkbox=preserve_fix_checkbox,
+                prefer="",
+                rebuild_param_tables=False,
+            )
         except NameError:
-            # Early init: callback is defined before death/dup refresh helpers exist.
+            # Early init: death/dup refresh helpers are defined later.
             pass
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     enable_chemostat_flow_var.trace_add("write", lambda *_: _refresh_chemostat_flow_state())
     _refresh_chemostat_flow_state()
@@ -830,24 +853,31 @@ def build_monte_carlo_gd_panel(
     enable_intermediate_costs_check.grid(row=11, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_intermediate_costs_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Intermediate Costs"])
 
-    def _refresh_intermediate_costs_state(*, preserve_fix_checkbox: bool = False) -> None:
+    def _refresh_intermediate_costs_state(
+        *,
+        preserve_fix_checkbox: bool = False,
+        rebuild_param_tables: bool = True,
+    ) -> None:
         if m2_diffusion_var.get():
             enable_intermediate_costs_check.configure(state="normal")
         else:
             enable_intermediate_costs_var.set(False)
             enable_intermediate_costs_check.configure(state="disabled")
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Intermediate Costs",
+            visible=bool(enable_intermediate_costs_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_intermediate_costs_var.get():
-            hidden_params.discard("Intermediate Costs")
-            if (not preserve_fix_checkbox) and ("Intermediate Costs" in param_fix_checkboxes):
-                param_fix_checkboxes["Intermediate Costs"].set(True)
             if "Intermediate Costs" in param_initial_entries and not param_initial_entries["Intermediate Costs"].get().strip():
                 param_initial_entries["Intermediate Costs"].insert(0, "0.0")
             if "Intermediate Costs" in fixed_entries and not fixed_entries["Intermediate Costs"].get().strip():
                 fixed_entries["Intermediate Costs"].insert(0, "0.0")
-        else:
-            hidden_params.add("Intermediate Costs")
-        refresh_optimizable_params()
-        refresh_fixed_params()
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     enable_intermediate_costs_var.trace_add("write", lambda *_: _refresh_intermediate_costs_state())
     m2_diffusion_var.trace_add("write", lambda *_: _refresh_intermediate_costs_state())
@@ -862,11 +892,19 @@ def build_monte_carlo_gd_panel(
     enable_acetate_addition_check.grid(row=12, column=0, sticky="w", pady=(4, 0))
     CreateToolTip(enable_acetate_addition_check, SIMULATION_SETTINGS_TOOLTIPS["Enable Acetate Addition"])
 
-    def _refresh_acetate_addition_state(*, preserve_fix_checkbox: bool = False) -> None:
+    def _refresh_acetate_addition_state(
+        *,
+        preserve_fix_checkbox: bool = False,
+        rebuild_param_tables: bool = True,
+    ) -> None:
+        sync_optional_param_row_visibility(
+            hidden_params,
+            "Average In_Flow (Acetate)",
+            visible=bool(enable_acetate_addition_var.get()),
+            param_fix_checkboxes=param_fix_checkboxes,
+            force_fix=not preserve_fix_checkbox,
+        )
         if enable_acetate_addition_var.get():
-            hidden_params.discard("Average In_Flow (Acetate)")
-            if (not preserve_fix_checkbox) and ("Average In_Flow (Acetate)" in param_fix_checkboxes):
-                param_fix_checkboxes["Average In_Flow (Acetate)"].set(True)
             if (
                 "Average In_Flow (Acetate)" in param_initial_entries
                 and not param_initial_entries["Average In_Flow (Acetate)"].get().strip()
@@ -874,10 +912,9 @@ def build_monte_carlo_gd_panel(
                 param_initial_entries["Average In_Flow (Acetate)"].insert(0, "0.0")
             if "Average In_Flow (Acetate)" in fixed_entries and not fixed_entries["Average In_Flow (Acetate)"].get().strip():
                 fixed_entries["Average In_Flow (Acetate)"].insert(0, "0.0")
-        else:
-            hidden_params.add("Average In_Flow (Acetate)")
-        refresh_optimizable_params()
-        refresh_fixed_params()
+        if rebuild_param_tables:
+            refresh_optimizable_params()
+            refresh_fixed_params()
 
     enable_acetate_addition_var.trace_add("write", lambda *_: _refresh_acetate_addition_state())
     _refresh_acetate_addition_state()
@@ -924,72 +961,62 @@ def build_monte_carlo_gd_panel(
         SIMULATION_SETTINGS_TOOLTIPS["Constant Duplication Probability"],
     )
 
-    def _refresh_death_dup_constant_params_state(*, preserve_fix_checkbox: bool = False) -> None:
-        if no_death_var.get() and constant_death_probability_var.get():
-            constant_death_probability_var.set(False)
-        constant_death = bool(constant_death_probability_var.get())
-        constant_dup = bool(constant_duplication_probability_var.get())
-        no_death = bool(no_death_var.get())
-        any_constant = (constant_death or constant_dup) and not (no_death and constant_dup)
+    _death_dup_flow_reconciling = {"active": False}
 
-        if no_death:
-            hidden_params.add("Death Decay Rate")
-        elif binary_death_at_zero_energy_var.get() or constant_death:
-            hidden_params.add("Death Decay Rate")
-        else:
-            hidden_params.discard("Death Decay Rate")
-
-        if any_constant:
-            hidden_params.discard(CONSTANT_PROBABILITY)
-            if (not preserve_fix_checkbox) and (CONSTANT_PROBABILITY in param_fix_checkboxes):
-                param_fix_checkboxes[CONSTANT_PROBABILITY].set(True)
-        else:
-            hidden_params.add(CONSTANT_PROBABILITY)
-
-        if constant_dup:
-            hidden_params.add("Duplication Sigmoid Midpoint")
-            hidden_params.add("Duplication Sigmoid Intensity")
-        else:
-            hidden_params.discard("Duplication Sigmoid Midpoint")
-            hidden_params.discard("Duplication Sigmoid Intensity")
-
-        refresh_optimizable_params()
-        refresh_fixed_params()
+    def _refresh_death_dup_constant_params_state(
+        *,
+        preserve_fix_checkbox: bool = False,
+        prefer: str = "",
+        rebuild_param_tables: bool = True,
+    ) -> None:
+        if _death_dup_flow_reconciling["active"]:
+            return
+        _death_dup_flow_reconciling["active"] = True
+        try:
+            visibility = apply_death_dup_flow_toggle_ui(
+                no_death_var=no_death_var,
+                constant_death_probability_var=constant_death_probability_var,
+                constant_duplication_probability_var=constant_duplication_probability_var,
+                enable_chemostat_flow_var=enable_chemostat_flow_var,
+                no_death_checkbox=no_death_check,
+                constant_death_checkbox=constant_death_probability_check,
+                constant_duplication_checkbox=constant_duplication_probability_check,
+                binary_death_at_zero_energy=bool(binary_death_at_zero_energy_var.get()),
+                prefer=prefer,
+            )
+            sync_death_dup_hidden_params(
+                hidden_params,
+                visibility,
+                param_fix_checkboxes=param_fix_checkboxes,
+                force_fix_constant_probability=not preserve_fix_checkbox,
+            )
+            if rebuild_param_tables:
+                refresh_optimizable_params()
+                refresh_fixed_params()
+        finally:
+            _death_dup_flow_reconciling["active"] = False
 
     def _refresh_binary_death_state(*, preserve_fix_checkbox: bool = False) -> None:
         _refresh_death_dup_constant_params_state(preserve_fix_checkbox=preserve_fix_checkbox)
 
-    def _refresh_constant_death_state(*, preserve_fix_checkbox: bool = False) -> None:
-        if bool(no_death_var.get()):
-            if bool(constant_death_probability_var.get()):
-                constant_death_probability_var.set(False)
-            constant_death_probability_check.configure(state="disabled")
-        else:
-            constant_death_probability_check.configure(state="normal")
-        if bool(constant_death_probability_var.get()):
-            if bool(no_death_var.get()):
-                no_death_var.set(False)
-            no_death_check.configure(state="disabled")
-        else:
-            no_death_check.configure(state="normal")
-        _refresh_death_dup_constant_params_state(preserve_fix_checkbox=preserve_fix_checkbox)
+    def _refresh_constant_death_state(*, preserve_fix_checkbox: bool = False, prefer: str = "constant_death") -> None:
+        _refresh_death_dup_constant_params_state(
+            preserve_fix_checkbox=preserve_fix_checkbox,
+            prefer=prefer,
+        )
 
     def _refresh_constant_duplication_state(*, preserve_fix_checkbox: bool = False) -> None:
-        if (
-            bool(no_death_var.get())
-            and bool(constant_duplication_probability_var.get())
-            and (not bool(enable_chemostat_flow_var.get()))
-        ):
-            constant_duplication_probability_var.set(False)
-        if bool(no_death_var.get()) and (not bool(enable_chemostat_flow_var.get())):
-            constant_duplication_probability_check.configure(state="disabled")
-        else:
-            constant_duplication_probability_check.configure(state="normal")
         _refresh_death_dup_constant_params_state(preserve_fix_checkbox=preserve_fix_checkbox)
 
-    binary_death_at_zero_energy_var.trace_add("write", lambda *_: _refresh_constant_death_state())
-    no_death_var.trace_add("write", lambda *_: _refresh_constant_death_state())
-    constant_death_probability_var.trace_add("write", lambda *_: _refresh_constant_death_state())
+    binary_death_at_zero_energy_var.trace_add("write", lambda *_: _refresh_binary_death_state())
+    no_death_var.trace_add(
+        "write",
+        lambda *_: _refresh_constant_death_state(prefer="no_death"),
+    )
+    constant_death_probability_var.trace_add(
+        "write",
+        lambda *_: _refresh_constant_death_state(prefer="constant_death"),
+    )
     constant_duplication_probability_var.trace_add("write", lambda *_: _refresh_constant_duplication_state())
     _refresh_death_dup_constant_params_state()
 

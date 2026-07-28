@@ -490,7 +490,10 @@ SIMULATION_SETTINGS_TOOLTIPS = {
     "Constant Duplication Probability": (
         "Constant Duplication Probability\n\n"
         "Flat duplication rate P(dup) = Constant Probability at all energies.\n"
-        "Ignores sigmoid midpoint/intensity."
+        "Ignores sigmoid midpoint/intensity.\n\n"
+        "With No Death: requires Enable Chemostat Flow; duplication is then\n"
+        "derived from flow (phi/(1-phi)) and Constant Probability is ignored.\n"
+        "Without flow, this toggle cannot stay on while No Death is enabled."
     ),
 }
 

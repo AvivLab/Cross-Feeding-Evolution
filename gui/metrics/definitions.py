@@ -18,6 +18,8 @@ from typing import Dict, FrozenSet, List, Optional, Tuple
 NEUTRAL_PERCENTILE_MAX_SIMS = 60
 NEUTRAL_PERCENTILE_MIN_SIMS = 20
 NEUTRAL_PERCENTILE_TARGET_CI_PCT = 3.0
+# Exchange / acetate neutral-percentile metrics: fixed Monte Carlo size (no early stop).
+EXCHANGE_NEUTRAL_PERCENTILE_SIMS = 100
 
 TRAIT_ENTROPY_BINS = 20
 TASK_RATIO_BINS = 30
@@ -30,6 +32,9 @@ _NEUTRAL_PERC_MONTE_CARLO_BLURB = (
     f"Runs many neutral replays (up to {NEUTRAL_PERCENTILE_MAX_SIMS}, at least "
     f"{NEUTRAL_PERCENTILE_MIN_SIMS} before stopping early when the estimate is stable within "
     f"about {NEUTRAL_PERCENTILE_TARGET_CI_PCT}%)."
+)
+_EXCHANGE_NEUTRAL_PERC_MONTE_CARLO_BLURB = (
+    f"Runs exactly {EXCHANGE_NEUTRAL_PERCENTILE_SIMS} neutral replays (no early stopping)."
 )
 
 
@@ -190,42 +195,47 @@ _METRIC_CATALOG: Tuple[MetricDefinition, ...] = (
     MetricDefinition(
         name="Exchanged M2 Percent (neutral perc.)",
         math=(
-            "Compute Exchanged M2 Percent in the real run.\n"
-            "Each neutral replay keeps the same trait history, then rebuilds task 1 and task 2 "
-            "from nutrient pools after inflow, and applies the same deficit formula "
-            "(100 × Σ max(0, task2−task1) / Σ task2).\n"
+            "Compute Exchanged M2 Percent in the real run (tasks at metabolism time).\n"
+            "Each neutral replay applies demographic events only through the generation before "
+            "the final gen's death/dup/flow, then rebuilds task 1 and task 2 from that "
+            "metabolism-time population and the real post-inflow M1/M2 pools, and applies the "
+            "same deficit formula (100 × Σ max(0, task2−task1) / Σ task2).\n"
             "Percentile = percent of replays at or below the real run.\n"
-            f"{_NEUTRAL_PERC_MONTE_CARLO_BLURB}"
+            f"{_EXCHANGE_NEUTRAL_PERC_MONTE_CARLO_BLURB}"
         ),
         range=(
             "0 to 100. Needs pooled-nutrient settings, coupled traits, and final M1/M2 snapshot."
         ),
         tooltip=(
             "Where the real Exchanged M2 Percent sits vs neutral trait replays (0 = most replays higher). "
-            f"{_NEUTRAL_PERC_MONTE_CARLO_BLURB} "
+            "Neutral tasks use metabolism-time traits (not post-death/dup) with post-inflow pools. "
+            f"{_EXCHANGE_NEUTRAL_PERC_MONTE_CARLO_BLURB} "
             "Needs metabolite_environment_after_inflow_final_generation."
         ),
-        compute_cost=240,
+        compute_cost=400,
         pool_only_regime=True,
     ),
     MetricDefinition(
         name="Crossfeeding % of Acetate (neutral perc.)",
         math=(
-            "Compute Crossfeeding % of Acetate in the real run.\n"
-            "Each neutral replay keeps the same trait history, then rebuilds task 1 and task 2 "
-            "from nutrient pools after inflow, and applies the same acetate formula.\n"
+            "Compute Crossfeeding % of Acetate in the real run (tasks at metabolism time).\n"
+            "Each neutral replay applies demographic events only through the generation before "
+            "the final gen's death/dup/flow, then rebuilds task 1 and task 2 from that "
+            "metabolism-time population and the real post-inflow M1/M2 pools, and applies the "
+            "same acetate formula.\n"
             "Percentile = percent of replays at or below the real run.\n"
-            f"{_NEUTRAL_PERC_MONTE_CARLO_BLURB}"
+            f"{_EXCHANGE_NEUTRAL_PERC_MONTE_CARLO_BLURB}"
         ),
         range=(
             "0 to 100. Needs pooled-nutrient settings, coupled traits, and final M1/M2 snapshot."
         ),
         tooltip=(
             "Where the real Crossfeeding % of Acetate sits vs neutral trait replays (0 = most replays higher). "
-            f"{_NEUTRAL_PERC_MONTE_CARLO_BLURB} "
+            "Neutral tasks use metabolism-time traits (not post-death/dup) with post-inflow pools. "
+            f"{_EXCHANGE_NEUTRAL_PERC_MONTE_CARLO_BLURB} "
             "Needs metabolite_environment_after_inflow_final_generation."
         ),
-        compute_cost=240,
+        compute_cost=400,
         pool_only_regime=True,
     ),
 )

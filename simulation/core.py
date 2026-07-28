@@ -120,6 +120,7 @@ def run_simulation(
     initial_facilitation: float = 0.5,
     silent: bool = True,
     store_history: bool = True,
+    store_metabolite_environment_after_inflow_history: bool = False,
     enable_m1_diffusion: bool = False,
     m1_porin_simple_diffusion: bool = False,
     enable_m2_diffusion: bool = True,
@@ -163,8 +164,6 @@ def run_simulation(
     # Per-run RNG avoids global RNG contention under threaded replicates.
     rng_np = np.random.default_rng(seed_int)
     """
-    A lightweight, import-safe core for the Simulation model.
-
     Returns a dict with:
     - 'A_history': list[ndarray] (trait values each generation)
     - 'B_history': list[ndarray] (trait values each generation; may be independent)
@@ -182,6 +181,8 @@ def run_simulation(
     - 'final_metabolite_environment': [M1_env, M2_env] after the last generation completes (deaths/flow/etc.)
     - 'metabolite_environment_after_inflow_final_generation': [M1_env, M2_env] on the last scheduled
       generation immediately after M1 inflow and optional acetate M2 inflow (for neutral metrics).
+    - 'metabolite_environment_after_inflow_history': list[[M1_env, M2_env]] after inflow each generation
+      when ``store_metabolite_environment_after_inflow_history`` is True (else empty list).
     - 'enable_m1_diffusion', 'enable_m2_diffusion', 'enable_intermediate_costs': bool flags for metrics
       that only apply in the pooled-env (no diffusion / no intermediate storage penalty) regime.
     - 'number_gen', 'collapsed'
@@ -371,6 +372,13 @@ def run_simulation(
     cell_volume = 1.0
     # [M1_env, M2_env] after M1 inflow (+ optional acetate M2 inflow) on the last scheduled generation only.
     metabolite_environment_after_inflow_final_generation = None
+    store_metabolite_environment_after_inflow_history = bool(
+        store_metabolite_environment_after_inflow_history
+    )
+    # Per-generation post-inflow pools (same timing as the final-generation snapshot above).
+    metabolite_environment_after_inflow_history: list = (
+        [None] * number_gen if store_metabolite_environment_after_inflow_history else []
+    )
 
     for nG in range(number_gen):
         flow_removed_num = 0
@@ -404,6 +412,11 @@ def run_simulation(
                 "investment_modifier": float(inv_mod),
                 "final_metabolite_environment": [float(metab1env), float(metab2env)],
                 "metabolite_environment_after_inflow_final_generation": None,
+                "metabolite_environment_after_inflow_history": (
+                    metabolite_environment_after_inflow_history[:nG]
+                    if store_metabolite_environment_after_inflow_history
+                    else []
+                ),
                 "enable_m1_diffusion": bool(enable_m1_diffusion),
                 "enable_m2_diffusion": bool(enable_m2_diffusion),
                 "enable_intermediate_costs": bool(enable_intermediate_costs),
@@ -444,8 +457,11 @@ def run_simulation(
             if metab2env < 0:
                 metab2env = 0.0
 
+        after_inflow = [float(metab1env), float(metab2env)]
         if nG == number_gen - 1:
-            metabolite_environment_after_inflow_final_generation = [float(metab1env), float(metab2env)]
+            metabolite_environment_after_inflow_final_generation = after_inflow
+        if store_metabolite_environment_after_inflow_history:
+            metabolite_environment_after_inflow_history[nG] = after_inflow
 
         # Handle M1 diffusion (optional). When enabled, M1 diffuses into internal pools before Task A conversion.
         if enable_m1_diffusion:
@@ -851,6 +867,11 @@ def run_simulation(
         "investment_modifier": float(inv_mod),
         "final_metabolite_environment": [float(metab1env), float(metab2env)],
         "metabolite_environment_after_inflow_final_generation": metabolite_environment_after_inflow_final_generation,
+        "metabolite_environment_after_inflow_history": (
+            metabolite_environment_after_inflow_history
+            if store_metabolite_environment_after_inflow_history
+            else []
+        ),
         "enable_m1_diffusion": bool(enable_m1_diffusion),
         "enable_m2_diffusion": bool(enable_m2_diffusion),
         "enable_intermediate_costs": bool(enable_intermediate_costs),
@@ -929,6 +950,11 @@ def run_simulation_wrapper(params: dict) -> dict:
     initial_facilitation = float(params.get("Initial Facilitation", 0.5))
     silent = _coerce_bool_param(params, "silent", _coerce_bool_param(params, "Silent Mode", True))
     store_history = _coerce_bool_param(params, "store_history", True)
+    store_metabolite_environment_after_inflow_history = _coerce_bool_param(
+        params,
+        "store_metabolite_environment_after_inflow_history",
+        False,
+    )
     keep_optional_final_arrays_arg: Optional[bool] = None
     if "keep_optional_final_arrays" in params:
         keep_optional_final_arrays_arg = _coerce_bool_param(
@@ -974,6 +1000,7 @@ def run_simulation_wrapper(params: dict) -> dict:
         initial_facilitation=initial_facilitation,
         silent=silent,
         store_history=store_history,
+        store_metabolite_environment_after_inflow_history=store_metabolite_environment_after_inflow_history,
         enable_m1_diffusion=enable_m1_diffusion,
         m1_porin_simple_diffusion=(
             m1_porin_simple_diffusion if (enable_m1_diffusion or enable_m1_facilitated_diffusion or m1_porin_simple_diffusion) else False
