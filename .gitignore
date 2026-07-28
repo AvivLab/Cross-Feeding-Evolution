@@ -2,5 +2,15 @@
 __pycache__/
 *.py[cod]
 .DS_Store
+.mplconfig/
 figure_reproduction.zip
-figure_reproduction/
+# Large assembled campaign table (place locally; see tools/Figure Reconstruction/README.md)
+**/figure_reproduction/batch_hit_counts.csv
+**/figure_reproduction/*.csv
+# Local figure rebuild outputs / LaTeX intermediates
+tools/Figure Reconstruction/output/
+tools/Figure Reconstruction/figures/Used/.build_*/
+tools/Figure Reconstruction/figures/Used/**/*.aux
+tools/Figure Reconstruction/figures/Used/**/*.log
+tools/Figure Reconstruction/figures/Used/**/*.fls
+tools/Figure Reconstruction/figures/Used/**/*.fdb_latexmk

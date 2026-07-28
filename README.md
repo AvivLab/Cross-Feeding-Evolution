@@ -23,7 +23,7 @@ Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Ch
 
 ## About
 
-- **Version:** 1.0.1
+- **Version:** 1.0.2
 - **Last updated:** 2026-07-28
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
