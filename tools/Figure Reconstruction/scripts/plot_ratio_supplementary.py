@@ -15,11 +15,15 @@ import numpy as np
 from plot_primary_batch_violins import PAPER_CONFIG_ORDER, hit_stats, workspaces_output
 
 N_SIMS_PER_BATCH = 1000
-MIN_FIXED_Y = 0.5  # paper figures: fixed-Y campaigns at Y >= 0.5 (exclude Y=0.1)
+MIN_FIXED_Y = 0.0001  # paper figures: all completed fixed-Y campaigns
+MAX_FIXED_Y = 10.0  # omit Y=20 until that campaign is included in batch_hit_counts.csv
 
 _ALL_SUITE_ORDER: Sequence[Tuple[str, float, str]] = (
+    ("Fixed_0.0001_ratio", 0.0001, r"$Y=10^{-4}$"),
     ("Fixed_0.1_ratio", 0.1, r"$Y=0.1$"),
+    ("Fixed_0.25_ratio", 0.25, r"$Y=0.25$"),
     ("Fixed_0.5_ratio", 0.5, r"$Y=0.5$"),
+    ("Fixed_0.75_ratio", 0.75, r"$Y=0.75$"),
     ("Fixed_1_ratio", 1.0, r"$Y=1$"),
     ("Fixed_3_ratio", 3.0, r"$Y=3$"),
     ("Fixed_5_ratio", 5.0, r"$Y=5$"),
@@ -29,7 +33,7 @@ _ALL_SUITE_ORDER: Sequence[Tuple[str, float, str]] = (
 )
 
 SUITE_ORDER: Sequence[Tuple[str, float, str]] = tuple(
-    entry for entry in _ALL_SUITE_ORDER if entry[1] >= MIN_FIXED_Y
+    entry for entry in _ALL_SUITE_ORDER if MIN_FIXED_Y <= entry[1] <= MAX_FIXED_Y
 )
 
 # Main-text Figure 3 typography (legible at single-column width in the paper).

@@ -17,7 +17,7 @@ Scripts to regenerate every figure in the main manuscript and Supplementary Info
 
 ## Data
 
-The data-driven figures read `data/figure_reproduction/batch_hit_counts.csv`. Place that file under `data/figure_reproduction/` before running the rebuild script.
+The data-driven figures read `data/figure_reproduction/batch_hit_counts.csv` (~0.5–1 GB). That file is **not** shipped in the download (GitHub size limits); place it locally before running the rebuild script.
 
 To build the CSV from aggregated campaign outputs, collect:
 

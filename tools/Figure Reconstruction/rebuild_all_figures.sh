@@ -6,10 +6,14 @@ SCRIPTS="$ROOT/scripts"
 DATA_CSV="$ROOT/data/figure_reproduction/batch_hit_counts.csv"
 OUT="$ROOT/output"
 export PYTHONPATH="$SCRIPTS${PYTHONPATH:+:$PYTHONPATH}"
+export MPLBACKEND="${MPLBACKEND:-Agg}"
+export MPLCONFIGDIR="${MPLCONFIGDIR:-$ROOT/.mplconfig}"
+mkdir -p "$MPLCONFIGDIR"
 
 if [[ ! -f "$DATA_CSV" ]]; then
   echo "Missing $DATA_CSV" >&2
   echo "Run: python3 scripts/assemble_figure_data.py" >&2
+  echo "Or place an existing batch_hit_counts.csv under data/figure_reproduction/." >&2
   exit 1
 fi
 

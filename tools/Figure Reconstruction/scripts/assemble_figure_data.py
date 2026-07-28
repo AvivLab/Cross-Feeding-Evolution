@@ -209,6 +209,10 @@ def _iter_rescreen_rows(
 
 def _write_csv(path: Path, rows: Iterable[Dict[str, str]]) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
+    # If a symlink points at a lab/paper copy, replace it with a real file so we
+    # do not accidentally truncate the shared source table.
+    if path.is_symlink():
+        path.unlink()
     n = 0
     with path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=CSV_FIELDS)

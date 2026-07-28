@@ -23,7 +23,7 @@ Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Ch
 
 ## About
 
-- **Version:** 1.0.0
+- **Version:** 1.0.1
 - **Last updated:** 2026-07-28
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
@@ -330,7 +330,7 @@ Repeat steps 1–2 for each JSON in `settings/` that you need (seven fixed yield
 
 ## Reconstructing paper figures
 
-Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the five figures in the main manuscript and Supplementary Information PDF (Figs. 1–3 and Supp. Figs. S1–S2) from a single table, `batch_hit_counts.csv`.
+Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the five figures in the main manuscript and Supplementary Information PDF (Figs. 1–3 and Supp. Figs. S1–S2) from a single table, `batch_hit_counts.csv` (typically several hundred MB). That CSV is **not** included in the download; build or copy it locally first.
 
 **Typical workflow:**
 
@@ -345,7 +345,7 @@ Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regen
    python3 scripts/assemble_figure_data.py
    ```
 
-   See `tools/Figure Reconstruction/README.md` for details.
+   See `tools/Figure Reconstruction/README.md` for details. TikZ schematics (Figs. 1–2 and Supp. Fig. S1) can be rebuilt without the CSV; Figs. 3 and S2 need it.
 
 3. Rebuild figures:
 
