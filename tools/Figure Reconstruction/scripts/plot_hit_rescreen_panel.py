@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Rectangle
 
-from plot_primary_batch_violins import PAPER_CONFIG_ORDER, workspaces_output
+from plot_primary_batch_violins import MAIN_CONFIG_ORDER, PAPER_CONFIG_ORDER, workspaces_output
 from plot_ratio_supplementary import SUITE_ORDER, apply_panel_figure_layout, apply_figure3_axis_typography, format_y_tick, panel_label, FIG3_LEGENDSIZE, N_SIMS_PER_BATCH, x_positions_for_y_vals
 
 RescreenRow = Tuple[float, float, int]
@@ -33,13 +33,17 @@ Y_SCATTER_COLORS: Dict[float, str] = {
     for (_, y_val, _), color in zip(
         SUITE_ORDER,
         [
+            "#dadaeb",
             "#bcbddc",
+            "#9e9ac8",
             "#4e79a7",
             "#59a14f",
             "#e15759",
             "#b07aa1",
             "#f28e2b",
             "#76b7b2",
+            "#edc948",
+            "#ff9da7",
         ],
     )
 }
@@ -238,15 +242,17 @@ def load_rescreen_batch_rates_by_suite(
 
 def suite_rescreen_batch_means(
     by_suite: Dict[str, Dict[str, List[float]]],
+    *,
+    config_order: Sequence[Tuple[str, str, str]] = PAPER_CONFIG_ORDER,
 ) -> Tuple[List[float], Dict[str, List[float]], Dict[str, List[float]]]:
     """Aggregate per-batch re-screen rates into campaign means and s.d.s."""
     y_vals: List[float] = []
-    mean_rates: Dict[str, List[float]] = {key: [] for key, _, _ in PAPER_CONFIG_ORDER}
-    std_rates: Dict[str, List[float]] = {key: [] for key, _, _ in PAPER_CONFIG_ORDER}
+    mean_rates: Dict[str, List[float]] = {key: [] for key, _, _ in config_order}
+    std_rates: Dict[str, List[float]] = {key: [] for key, _, _ in config_order}
     for suite, y_val, _ in SUITE_ORDER:
         cfgs = by_suite.get(suite)
         y_vals.append(y_val)
-        for key, _, _ in PAPER_CONFIG_ORDER:
+        for key, _, _ in config_order:
             if cfgs is None:
                 mean_rates[key].append(float("nan"))
                 std_rates[key].append(float("nan"))
@@ -301,10 +307,11 @@ def plot_rescreen_panel(
     panel_letter: str = "b",
     show_xlabel: bool = True,
     even_x_spacing: bool = False,
+    config_order: Sequence[Tuple[str, str, str]] = PAPER_CONFIG_ORDER,
 ) -> None:
     y_max = 0.0
     x_arr = x_positions_for_y_vals(y_vals, even_spacing=even_x_spacing)
-    for key, label, color in PAPER_CONFIG_ORDER:
+    for key, label, color in config_order:
         means = 100.0 * np.asarray(mean_rates[key], dtype=float)
         mask = np.isfinite(means)
         if not np.any(mask):
@@ -433,34 +440,44 @@ def _ridge_histogram_batch_stats(
     batch_count_lists: Sequence[Sequence[int]],
     *,
     max_count: int,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Mean ± s.d. ridge heights per success count, peak-normalized like pooled ridges."""
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Mean ridge heights with Q1–Q3 across batches, peak-normalized like pooled ridges."""
     x = np.arange(0, max_count + 1, dtype=float)
     nonempty_lists = [counts for counts in batch_count_lists if counts]
     profiles = _per_batch_density_profiles(nonempty_lists, max_count=max_count)
     if profiles.size == 0:
-        return x, np.zeros_like(x), np.zeros_like(x)
+        z = np.zeros_like(x)
+        return x, z, z, z
     mean_prof = profiles.mean(axis=0)
-    std_prof = (
-        profiles.std(axis=0, ddof=1)
-        if profiles.shape[0] > 1
-        else np.zeros_like(mean_prof)
-    )
+    if profiles.shape[0] > 1:
+        q1_prof = np.percentile(profiles, 25, axis=0)
+        q3_prof = np.percentile(profiles, 75, axis=0)
+    else:
+        q1_prof = mean_prof.copy()
+        q3_prof = mean_prof.copy()
     peak = float(mean_prof.max())
     if peak > 0.0:
         mean_prof = mean_prof / peak
-        std_prof = std_prof / peak
-    return x, mean_prof, std_prof
+        q1_prof = q1_prof / peak
+        q3_prof = q3_prof / peak
+    return x, mean_prof, q1_prof, q3_prof
 
 
 def _ridge_errorbar_yerr(
-    std_density: np.ndarray,
+    mean_density: np.ndarray,
+    q1_density: np.ndarray,
+    q3_density: np.ndarray,
     *,
     ridge_height: float,
     peak_floor: float | None = None,
 ) -> np.ndarray:
-    """Map batch s.d. density to ridge-axis error bars, optionally boosting visibility."""
-    yerr = ridge_height * np.asarray(std_density, dtype=float)
+    """Map batch quartile densities to asymmetric ridge-axis error bars (Q1–Q3)."""
+    mean_arr = np.asarray(mean_density, dtype=float)
+    q1_arr = np.asarray(q1_density, dtype=float)
+    q3_arr = np.asarray(q3_density, dtype=float)
+    lower = ridge_height * np.maximum(mean_arr - q1_arr, 0.0)
+    upper = ridge_height * np.maximum(q3_arr - mean_arr, 0.0)
+    yerr = np.vstack([lower, upper])
     if peak_floor is None or peak_floor <= 0.0:
         return yerr
     peak_yerr = float(np.max(yerr))
@@ -521,7 +538,7 @@ def plot_regime_ridgeline_panel(
 
     for ridge_idx, (_, y_val, _suite, batch_lists) in enumerate(ridges):
         base_y = ridge_idx * ridge_spacing
-        x_pts, mean_density, std_density = _ridge_histogram_batch_stats(
+        x_pts, mean_density, q1_density, q3_density = _ridge_histogram_batch_stats(
             batch_lists,
             max_count=n_rescreen,
         )
@@ -537,14 +554,18 @@ def plot_regime_ridgeline_panel(
         )
         if y_val not in hide_std:
             yerr = _ridge_errorbar_yerr(
-                std_density,
+                mean_density,
+                q1_density,
+                q3_density,
                 ridge_height=ridge_height,
                 peak_floor=errorbar_peak_floor,
             )
+            q1_y = base_y + ridge_height * q1_density
+            q3_y = base_y + ridge_height * q3_density
             ax.fill_between(
                 x_pts,
-                top_y - yerr,
-                top_y + yerr,
+                q1_y,
+                q3_y,
                 color="#333333",
                 alpha=0.12,
                 linewidth=0.0,
@@ -606,15 +627,16 @@ def plot_rescreen_ridgeline_figure(
     data_row_type: str = "hit",
     output_path: Path,
     y_vals: Sequence[float] | None = None,
-    figsize: Tuple[float, float] = (11.0, 10.5),
+    figsize: Tuple[float, float] | None = None,
     ridge_spacing: float = 0.42,
     ridge_height: float = 0.36,
     csv_glob: str = "primary_hit_rescreen_*.csv",
     xlabel: str | None = None,
     hide_std_y_vals: Sequence[float] | None = None,
     errorbar_peak_floor: float | None = None,
+    config_order: Sequence[Tuple[str, str, str]] = PAPER_CONFIG_ORDER,
 ) -> None:
-    """Supplementary 2x2 ridgeline figure: one panel per regime, ridges by fixed $Y$."""
+    """Supplementary ridgeline figure: one panel per regime, ridges by fixed $Y$."""
     if data_csv is not None:
         from figure_csv import load_rescreen_batch_counts_by_suite as load_counts_csv
 
@@ -631,11 +653,22 @@ def plot_rescreen_ridgeline_figure(
     if y_vals is None:
         y_vals = [y for _, y, _ in SUITE_ORDER]
 
-    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    n_panels = len(config_order)
+    if n_panels <= 2:
+        nrows, ncols = 1, n_panels
+        if figsize is None:
+            figsize = (11.0, 5.4)
+    else:
+        nrows, ncols = 2, 2
+        if figsize is None:
+            figsize = (11.0, 10.5)
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, squeeze=False)
     panel_letters = "abcd"
-    for panel_idx, (ax, (key, label, color), letter) in enumerate(
-        zip(axes.ravel(), PAPER_CONFIG_ORDER, panel_letters)
+    for panel_idx, ((key, label, color), letter) in enumerate(
+        zip(config_order, panel_letters)
     ):
+        ax = axes.ravel()[panel_idx]
         plot_regime_ridgeline_panel(
             ax,
             config_key=key,
@@ -647,14 +680,16 @@ def plot_rescreen_ridgeline_figure(
             ridge_height=ridge_height,
             show_xlabel=True,
             show_xticklabels=True,
-            show_ylabel=panel_idx % 2 == 0,
+            show_ylabel=panel_idx % ncols == 0,
             panel_letter=letter,
             xlabel=xlabel,
             hide_std_y_vals=hide_std_y_vals,
             errorbar_peak_floor=errorbar_peak_floor,
         )
+    for ax in axes.ravel()[n_panels:]:
+        ax.set_axis_off()
 
-    apply_panel_figure_layout(fig, nrows=2)
+    apply_panel_figure_layout(fig, nrows=nrows)
     fig.subplots_adjust(hspace=0.38, wspace=0.28)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=180, bbox_inches="tight", pad_inches=0.08)

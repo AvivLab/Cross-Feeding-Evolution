@@ -17,11 +17,11 @@ Scripts to regenerate every figure in the main manuscript and Supplementary Info
 
 ## Data
 
-The data-driven figures read `data/figure_reproduction/batch_hit_counts.csv` (~0.5–1 GB). That file is **not** shipped in the download (GitHub size limits); place it locally before running the rebuild script.
+The data-driven figures read `data/figure_reproduction/batch_hit_counts.csv`. Place that file under `data/figure_reproduction/` before running the rebuild script.
 
 To build the CSV from aggregated campaign outputs, collect:
 
-- `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` — primary-batch hit counts for all suites and configurations
+- `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` — primary-batch hit counts for all suites (Neutral and Death+Duplication)
 - `Re-Runs/sessions/` — hit re-screen CSVs (one folder per campaign session)
 - `Re-Runs-NonHits/sessions/` — optional non-hit re-screens (included in the CSV but not used by the five published figures)
 
@@ -49,11 +49,11 @@ Outputs land in `output/`. TikZ PDFs are also written under `figures/Used/`.
 | Script | Output |
 |--------|--------|
 | `build_mccm_chain_figure.sh` | Fig. 1 — MCCM chain |
-| `build_mccm_four_conditions_figure.sh` | Fig. 2 — four regimes (Neutral / Differential Death / Differential Reproduction / Differential Death and Reproduction) |
+| `build_mccm_four_conditions_figure.sh` | Fig. 2 — life-cycle mode schematic (four modes illustrated; campaigns use Neutral + Death+Duplication) |
 | `build_simulation_loop_combined_figure.sh` | Supp. Fig. S1 — simulation loop |
 | `build_chemostat_snapshot_pdfs.sh` | Chemostat panels embedded in S1 (called by the script above) |
 | `assemble_figure_data.py` | `batch_hit_counts.csv` from aggregated campaign outputs |
-| `plot_figure3_panels.py` | Fig. 3 panels (a–b) |
-| `plot_rescreen_ridgeline_supplementary.py` | Supp. Fig. S2 — hit re-screen ridgelines |
+| `plot_figure3_panels.py` | Fig. 3 panels (a–b); defaults to Neutral + Death+Duplication |
+| `plot_rescreen_ridgeline_supplementary.py` | Supp. Fig. S2 — hit re-screen ridgelines (same two configs by default) |
 
 Run individual scripts with `--help` for paths and options. Set `PYTHONPATH=scripts` when invoking from this folder.

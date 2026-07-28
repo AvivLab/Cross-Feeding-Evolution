@@ -12,11 +12,16 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from plot_primary_batch_violins import PAPER_CONFIG_ORDER, hit_stats, workspaces_output
+from plot_primary_batch_violins import (
+    MAIN_CONFIG_ORDER,
+    PAPER_CONFIG_ORDER,
+    hit_stats,
+    workspaces_output,
+)
 
 N_SIMS_PER_BATCH = 1000
 MIN_FIXED_Y = 0.0001  # paper figures: all completed fixed-Y campaigns
-MAX_FIXED_Y = 10.0  # omit Y=20 until that campaign is included in batch_hit_counts.csv
+MAX_FIXED_Y = 10.0  # temporarily omit Y=20 from paper figures
 
 _ALL_SUITE_ORDER: Sequence[Tuple[str, float, str]] = (
     ("Fixed_0.0001_ratio", 0.0001, r"$Y=10^{-4}$"),
@@ -33,7 +38,9 @@ _ALL_SUITE_ORDER: Sequence[Tuple[str, float, str]] = (
 )
 
 SUITE_ORDER: Sequence[Tuple[str, float, str]] = tuple(
-    entry for entry in _ALL_SUITE_ORDER if MIN_FIXED_Y <= entry[1] <= MAX_FIXED_Y
+    entry
+    for entry in _ALL_SUITE_ORDER
+    if MIN_FIXED_Y <= entry[1] <= MAX_FIXED_Y
 )
 
 # Main-text Figure 3 typography (legible at single-column width in the paper).
@@ -50,6 +57,8 @@ def apply_figure3_axis_typography(ax: plt.Axes) -> None:
 
 
 def format_y_tick(y: float) -> str:
+    if y == 0.0001:
+        return r"$10^{-4}$"
     return f"{y:g}" if y < 1 or y != int(y) else f"{int(y)}"
 
 
@@ -108,18 +117,19 @@ def suite_means(
     by_suite: Dict[str, Dict[str, List[int]]],
     *,
     n_sims: int,
+    config_order: Sequence[Tuple[str, str, str]] = PAPER_CONFIG_ORDER,
 ) -> Tuple[List[float], List[str], Dict[str, List[float]], Dict[str, List[float]]]:
     y_vals: List[float] = []
     x_labels: List[str] = []
-    mean_hits: Dict[str, List[float]] = {key: [] for key, _, _ in PAPER_CONFIG_ORDER}
-    std_hits: Dict[str, List[float]] = {key: [] for key, _, _ in PAPER_CONFIG_ORDER}
+    mean_hits: Dict[str, List[float]] = {key: [] for key, _, _ in config_order}
+    std_hits: Dict[str, List[float]] = {key: [] for key, _, _ in config_order}
     for suite, y_val, label in SUITE_ORDER:
         cfgs = by_suite.get(suite)
         if cfgs is None:
             raise KeyError(f"suite {suite!r} missing from CSV")
         y_vals.append(y_val)
         x_labels.append(label)
-        for key, _, _ in PAPER_CONFIG_ORDER:
+        for key, _, _ in config_order:
             vals = cfgs.get(key)
             if not vals:
                 raise KeyError(f"{key!r} missing for suite {suite!r}")
@@ -140,10 +150,11 @@ def plot_hit_counts_panel(
     show_xlabel: bool = True,
     show_xticklabels: bool = True,
     even_x_spacing: bool = False,
+    config_order: Sequence[Tuple[str, str, str]] = PAPER_CONFIG_ORDER,
 ) -> None:
     y_max = 0.0
     x_arr = x_positions_for_y_vals(y_vals, even_spacing=even_x_spacing)
-    for key, label, color in PAPER_CONFIG_ORDER:
+    for key, label, color in config_order:
         means = np.asarray(mean_hits[key], dtype=float)
         stds = np.asarray(std_hits[key], dtype=float)
         y_max = max(y_max, float(np.max(means + stds)))

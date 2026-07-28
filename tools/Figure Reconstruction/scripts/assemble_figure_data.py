@@ -18,7 +18,7 @@ from plot_hit_rescreen_panel import (
     workspaces_re_runs,
 )
 from plot_primary_batch_violins import PAPER_CONFIG_ORDER, workspaces_output
-from plot_ratio_supplementary import MIN_FIXED_Y, SUITE_ORDER
+from plot_ratio_supplementary import MAX_FIXED_Y, MIN_FIXED_Y, SUITE_ORDER
 
 PAPER_CONFIG_KEYS = frozenset(key for key, _, _ in PAPER_CONFIG_ORDER)
 PAPER_SUITE_TAGS = frozenset(suite for suite, _, _ in SUITE_ORDER)
@@ -83,7 +83,8 @@ def _suite_y(suite: str) -> str:
 
 def _paper_y(y_val: str) -> bool:
     try:
-        return float(y_val) >= MIN_FIXED_Y
+        y = float(y_val)
+        return MIN_FIXED_Y <= y <= MAX_FIXED_Y
     except ValueError:
         return False
 
@@ -209,10 +210,6 @@ def _iter_rescreen_rows(
 
 def _write_csv(path: Path, rows: Iterable[Dict[str, str]]) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
-    # If a symlink points at a lab/paper copy, replace it with a real file so we
-    # do not accidentally truncate the shared source table.
-    if path.is_symlink():
-        path.unlink()
     n = 0
     with path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=CSV_FIELDS)
@@ -275,7 +272,10 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     n_rows = assemble_figure_data(data_dir=args.data_dir.resolve())
     print(f"Paper configs: {', '.join(sorted(PAPER_CONFIG_KEYS))}")
-    print(f"Fixed-Y suites (Y >= {MIN_FIXED_Y:g}): {', '.join(sorted(PAPER_SUITE_TAGS))}")
+    print(
+        f"Fixed-Y suites ({MIN_FIXED_Y:g} <= Y <= {MAX_FIXED_Y:g}): "
+        f"{', '.join(sorted(PAPER_SUITE_TAGS))}"
+    )
     path = args.data_dir / "batch_hit_counts.csv"
     size_mb = path.stat().st_size / (1024 * 1024)
     print(f"  batch_hit_counts: {n_rows:,} rows -> {path.name} ({size_mb:.1f} MiB)")

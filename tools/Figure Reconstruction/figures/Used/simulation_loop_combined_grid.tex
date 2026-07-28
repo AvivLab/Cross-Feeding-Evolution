@@ -1,16 +1,9 @@
 % Supplementary Figure S1 (combined): flowchart with chemostat diagrams inside each step box.
+% Legend is drawn inside simulation_loop_combined_tikz.tex (below the outcome boxes).
 \input{chemostat_snapshot_tikz.tex}
 
 \sbox0{\input{simulation_loop_combined_tikz.tex}}%
-\dimen0=\wd0
-\sbox1{%
-  \begin{minipage}{\dimen0}%
-    \centering
-    \SimLoopComboLegend
-  \end{minipage}%
-}%
-\sbox2{\vbox{\box0\nointerlineskip\vskip2pt\box1}}%
 % Height-limited: scale to float-page slot (not raw \textheight) to avoid bottom clip.
 % Height-only scaling preserves vertical size when the figure shares a row with a side caption.
 \centering
-\resizebox{!}{\dimexpr\textheight-2\textfloatsep\relax}{\box2}%
+\resizebox{!}{\dimexpr\textheight-2\textfloatsep\relax}{\box0}%

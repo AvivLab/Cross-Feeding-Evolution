@@ -30,9 +30,11 @@ cp -f "$ROOT/figures/Used/simulation_loop_combined.pdf" "$OUT/figures/simulation
 echo "== Data-driven figures =="
 python3 "$SCRIPTS/plot_figure3_panels.py" \
   --data-csv "$DATA_CSV" \
+  --configs main \
   --output "$OUT/figures/figure3_hit_panels.png"
 python3 "$SCRIPTS/plot_rescreen_ridgeline_supplementary.py" \
   --data-csv "$DATA_CSV" \
+  --configs main \
   --output "$OUT/supplementary/figures/supplementary_rescreen_ridgelines.png"
 
 echo "Done. Figures under $OUT"

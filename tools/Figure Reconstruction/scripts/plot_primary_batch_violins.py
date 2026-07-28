@@ -14,10 +14,15 @@ import numpy as np
 from matplotlib.patches import Patch
 
 PAPER_CONFIG_ORDER: Sequence[Tuple[str, str, str]] = (
-    ("Neutral", "Neutral", "#59a14f"),
+    ("Neutral", "Neutral Regime", "#59a14f"),
     ("justDeath", "Differential Death", "#e15759"),
     ("justDup", "Differential Reproduction", "#4e79a7"),
-    ("Death+Dup", "Differential Death and Reproduction", "#b07aa1"),
+    ("Death+Dup", "Selection Regime", "#b07aa1"),
+)
+# Main-text figures: Neutral baseline vs combined selection only.
+MAIN_CONFIG_ORDER: Sequence[Tuple[str, str, str]] = (
+    ("Neutral", "Neutral Regime", "#59a14f"),
+    ("Death+Dup", "Selection Regime", "#b07aa1"),
 )
 PANEL_LETTERS = "abcd"
 N_SIMS_PER_BATCH = 1000

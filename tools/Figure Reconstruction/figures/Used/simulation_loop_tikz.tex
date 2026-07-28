@@ -73,8 +73,8 @@
     Draw $P_{\mathrm{death},i}(E_i)$ for each organism; remove dead organisms};
 
   \node[proc, anchor=north] (dup) at ($(R |- rowtwobot)+(0,-\SimLoopRow)$) {%
-    \textbf{6. Duplication}\\
-    Draw $P_{\mathrm{dup.},i}(E_i)$ for each organism; split energy between parent and offspring;\\
+    \textbf{6. Reproduction}\\
+    Draw $P_{\mathrm{repro},i}(E_i)$ for each organism; split energy between parent and offspring;\\
     offspring receives a copy of the parent's traits ($A_i$, $B_i$)};
 
   \path let \p1=(death.south), \p2=(dup.south) in
@@ -115,7 +115,7 @@
 \node[outcome, anchor=north west, text width=\SimLoopOutcomeWide,
   minimum width=\SimLoopOutcomeWide] (analyze) at ($(init.south west |- outrow)$) {%
   \textbf{10. Cross-Feeding Outcome Analysis}\\
-  Evaluate final population for Persistence, Specialization, and Exchange (Methods);\\
+  Evaluate final population for Persistence, Specialization, and departure from neutral drift (Methods);\\
   record hit or non-hit for this parameter draw};
 
 \node[stop, anchor=north east, text width=\SimLoopCollapseNarrow,

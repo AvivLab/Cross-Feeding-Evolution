@@ -1,4 +1,4 @@
-% Four configurations: neutral chemostat baseline + three differential regimes.
+% Four configurations: neutral chemostat baseline + three selection regimes.
 % 2x2 panel grid; horizontal legend below; headers sit directly above each plot.
 \begin{tikzpicture}[font=\small, >=Stealth]
 
@@ -111,8 +111,8 @@
     \mccmcondaddoutflow
   \end{axis}
   \def\mccmcondletter{a}%
-  \def\mccmcondtitle{Neutral}%
-  \def\mccmcondsubtitle{No Death; Flow-Balanced Duplication}%
+  \def\mccmcondtitle{Neutral Regime}%
+  \def\mccmcondsubtitle{No Death; Flow-Balanced Reproduction}%
   \mccmcondpaneldecor{axA}
 \end{scope}
 
@@ -133,7 +133,7 @@
   \end{axis}
   \def\mccmcondletter{b}%
   \def\mccmcondtitle{Differential Death}%
-  \def\mccmcondsubtitle{eq.\ (4); Constant Duplication}%
+  \def\mccmcondsubtitle{eq.\ (4); Constant Reproduction}%
   \mccmcondpaneldecor{axB}
 \end{scope}
 
@@ -158,7 +158,7 @@
   \mccmcondpaneldecor{axC}
 \end{scope}
 
-% --- (d) Differential Death and Reproduction ---
+% --- (d) Selection ---
 \begin{scope}[local bounding box=mccmpanel, shift={(\mccmcondcolB,\mccmcondbottombase)}]
   \begin{axis}[
     mccm cond combined,
@@ -176,7 +176,7 @@
     \mccmcondaddoutflow
   \end{axis}
   \def\mccmcondletter{d}%
-  \def\mccmcondtitle{Differential Death and Reproduction}%
+  \def\mccmcondtitle{Selection Regime}%
   \def\mccmcondsubtitle{eq.\ (4), (5)}%
   \mccmcondpaneldecor{axD}
 \end{scope}
@@ -188,7 +188,7 @@
   \tikz[baseline=-0.5ex]{\draw[orange!85!black, line width=0.9pt] (0,0) -- (0.40cm,0);}%
   \ $P(\mathrm{death})$\quad
   \tikz[baseline=-0.5ex]{\draw[blue!65!black, line width=0.9pt] (0,0) -- (0.40cm,0);}%
-  \ $P(\mathrm{dup.})$\quad
+  \ $P(\mathrm{repro})$\quad
   \tikz[baseline=-0.5ex]{\draw[gray!55!black, line width=0.9pt, dashed] (0,0) -- (0.40cm,0);}%
   \ $P(\mathrm{outflow})$\ $(\phi=0.2)$%
 } (mccmfigbox.south east |- 0,0.35\mccmcondlegendband);

@@ -94,8 +94,8 @@
     \SimLoopComboSnap{death}};
 
   \node[proc, anchor=north] (dup) at ($(R |- rowtwobot)+(0,-\SimLoopComboGap)$) {%
-    \textbf{6. Duplication}\\
-    Draw $P_{\mathrm{dup.},i}(E_i)$ for each organism; split energy between parent and offspring;\\
+    \textbf{6. Reproduction}\\
+    Draw $P_{\mathrm{repro},i}(E_i)$ for each organism; split energy between parent and offspring;\\
     offspring receives a copy of the parent's traits ($A_i$, $B_i$)\SimLoopComboSnap{dup}};
 
   \path let \p1=(death.south), \p2=(dup.south) in
@@ -141,8 +141,8 @@
 \node[outcome, anchor=north west, text width=\SimLoopOutcomeWide,
   minimum width=\SimLoopOutcomeWide] (analyze) at ($(init.south west |- outrow)$) {%
   \textbf{10. Cross-Feeding Outcome Analysis}\\
-  Evaluate final population for Persistence, Specialization, and Exchange (Methods);\\
-  record hit or non-hit for this parameter draw\SimLoopComboSnap{score}};
+  Evaluate the final population for persistence, specialization, and deviation from neutral drift (Methods);\\
+  record hit/non-hit\SimLoopComboSnap{score}};
 
 \node[stop, anchor=north east, text width=\SimLoopCollapseNarrow,
   minimum width=\SimLoopCollapseNarrow] (stoprun) at ($(init.south east |- outrow)$) {%
@@ -166,7 +166,30 @@
   -- node[midway, looplabel] {$g < 1{,}000$,\\$N_g > 0$} (loopup)
   -- (inflow.west);
 
-\coordinate (bboxSouth) at ($(stoprun.south)+(0,-0.45cm)$);
+% Legend in the same TikZ picture (avoid nested-TikZ). Fit both outcome boxes so
+% the taller score panel stays inside the TeX bounding box.
+\ChemostatSnapStyles
+\node[fit=(analyze)(stoprun), inner sep=0pt, draw=none] (outcomefit) {};
+\matrix[
+  column sep=0.35cm,
+  ampersand replacement=\&,
+  nodes={inner sep=0pt, anchor=base},
+  row sep=0pt,
+  anchor=north,
+] (simlegend) at ($(outcomefit.south)+(0,-0.55cm)$) {
+  \node[csmballMone] {}; \&
+  \node[font=\scriptsize] {$M_1$}; \&
+  \node[csmballMtwo] {}; \&
+  \node[font=\scriptsize] {$M_2$}; \&
+  \node[csmballWaste] {}; \&
+  \node[font=\scriptsize] {Waste}; \&
+  \node[csorg] {}; \&
+  \node[font=\scriptsize] {Organism}; \&
+  \node[csorgMut] {}; \&
+  \node[font=\scriptsize] {Mutant offspring}; \\
+};
+
+\coordinate (bboxSouth) at ($(simlegend.south)+(0,-0.25cm)$);
 
 \pgfresetboundingbox
 \useasboundingbox

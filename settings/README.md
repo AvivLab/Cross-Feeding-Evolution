@@ -16,21 +16,19 @@ Each **suite folder** fixes the task-energy yield ratio (Acetate Ratio):
 | `Fixed_10_ratio` | 10 |
 | `Fixed_20_ratio` | 20 |
 
-Each suite contains four **paper configurations** (100 batches × 1000 simulations per batch):
+Each suite contains the two **paper configurations** used in the quantitative campaigns (100 batches × 1000 simulations per batch):
 
 | File prefix | Paper name |
 |-------------|------------|
 | `a_` | Neutral (`trueNeutral`) |
-| `c_` | Differential Death (`justDeath`) |
-| `d_` | Differential Reproduction (`justDup`) |
-| `e_` | Differential Death and Reproduction (`Death+Dup`) |
+| `e_` | Death+Duplication (`Death+Dup`) |
 
 All four metric filters A–C must pass for a hit (filter D is inactive). See any JSON file for bounds, toggles, and thresholds.
 
 ## Batch Runner (GUI)
 
 1. Open **Batch Runner** from the launcher.
-2. Use **Load JSON Settings…** and pick a file (e.g. `Fixed_3_ratio/c_justDeath_Fixed_3.json`).
+2. Use **Load JSON Settings…** and pick a file (e.g. `Fixed_3_ratio/e_Death+Dup_Fixed_3.json`).
 3. Set a **Save folder** and click **Run Batch**.
 
 Repeat for each suite and configuration you need.
@@ -41,7 +39,7 @@ From the Minimal bundle root:
 
 ```bash
 python headless/primary_batch_campaign.py \
-  settings/Fixed_3_ratio/c_justDeath_Fixed_3.json \
+  settings/Fixed_3_ratio/e_Death+Dup_Fixed_3.json \
   --output-dir OUTPUT_FOLDER
 ```
 

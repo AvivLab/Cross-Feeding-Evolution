@@ -258,102 +258,6 @@
   \mccmchainmetab@joint{#1@Mid}{mccmchaincA!50!mccmchaincB}%
   \mccmchainmetab@joint{#1@Out}{mccmchaincA!12!mccmchaincB}%
 }
-% #1--#2 endpoints, #3--#4 global path range [0,1], #5=1 on final chunk only
-\def\mccmchaindrawmetab@genchunk#1#2#3#4#5{%
-  \ifnum#5=1
-    \foreach \j in {0,1,...,\mccmchaingradlast} {%
-      \mccmchainmetab@segloc{\j}{1}{}%
-      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA*(#4-#3)}%
-      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB*(#4-#3)}%
-      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
-      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
-      \pgfmathsetmacro{\mccmchainmixA}{100*(1-2*\mccmchainuA)}%
-      \pgfmathsetmacro{\mccmchainmixB}{100*(1-2*(\mccmchainuB-0.5))}%
-      \ifdim\mccmchainuA pt<0.5pt
-        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixA))}%
-        \edef\mccmchainmixexp{\mccmchainmixval}%
-        \def\mccmchaincolA{mccmchaincA}%
-        \def\mccmchaincolB{mccmchaincB}%
-      \else
-        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixB))}%
-        \edef\mccmchainmixexp{\mccmchainmixval}%
-        \def\mccmchaincolA{mccmchaincB}%
-        \def\mccmchaincolB{mccmchaincC}%
-      \fi
-      \ifnum\j=\mccmchaingradlast
-        \def\mccmchaincapline{mccmchainmetabline@butt}%
-      \else
-        \def\mccmchaincapline{mccmchainmetabline}%
-      \fi
-      \draw[\mccmchaincapline,
-        draw=\mccmchaincolA!\mccmchainmixexp!\mccmchaincolB] (mbMetPtA) -- (mbMetPtB);%
-    }%
-    \pgfmathsetmacro{\mccmchainuTip}{#3+\mccmchainarrowshaftstop*(#4-#3)}%
-    \ifdim\mccmchainuTip pt<0.5pt
-      \pgfmathsetmacro{\mccmchainmixTip}{int(round(100*(1-2*\mccmchainuTip)))}%
-      \edef\mccmchainmixTipExp{\mccmchainmixTip}%
-      \def\mccmchaintipColA{mccmchaincA}%
-      \def\mccmchaintipColB{mccmchaincB}%
-    \else
-      \pgfmathsetmacro{\mccmchainmixTip}{int(round(100*(1-2*(\mccmchainuTip-0.5))))}%
-      \edef\mccmchainmixTipExp{\mccmchainmixTip}%
-      \def\mccmchaintipColA{mccmchaincB}%
-      \def\mccmchaintipColB{mccmchaincC}%
-    \fi
-    \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
-    \edef\mccmchaintipcolor{\mccmchaintipColA!\mccmchainmixTipExp!\mccmchaintipColB}%
-    \mccmchaindrawmetab@shaftbridge{#1}{#2}{\mccmchaintipcolor}%
-    \mccmchaindrawmetab@splithead{#1}{mbMetShaftEnd}{#2}{\mccmchaintipcolor};%
-  \else
-    \foreach \j in {0,1,...,\mccmchaingradlast} {%
-      \mccmchainmetab@segloc{\j}{0}{}%
-      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA*(#4-#3)}%
-      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB*(#4-#3)}%
-      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
-      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
-      \pgfmathsetmacro{\mccmchainmixA}{100*(1-2*\mccmchainuA)}%
-      \pgfmathsetmacro{\mccmchainmixB}{100*(1-2*(\mccmchainuB-0.5))}%
-      \ifdim\mccmchainuA pt<0.5pt
-        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixA))}%
-        \edef\mccmchainmixexp{\mccmchainmixval}%
-        \def\mccmchaincolA{mccmchaincA}%
-        \def\mccmchaincolB{mccmchaincB}%
-      \else
-        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixB))}%
-        \edef\mccmchainmixexp{\mccmchainmixval}%
-        \def\mccmchaincolA{mccmchaincB}%
-        \def\mccmchaincolB{mccmchaincC}%
-      \fi
-      \draw[mccmchainmetabline,
-        draw=\mccmchaincolA!\mccmchainmixexp!\mccmchaincolB] (mbMetPtA) -- (mbMetPtB);%
-    }%
-  \fi
-}
-% Generalist chain: M1 -> org -> M2 -> org -> waste (one organism, both tasks).
-\def\mccmchaindrawmetabarrowGeneralist#1#2#3#4#5#6#7#8{%
-  \colorlet{mccmchaincA}{#6}%
-  \colorlet{mccmchaincB}{#7}%
-  \colorlet{mccmchaincC}{#8}%
-  \mccmchainboundpoint{#2}{#3}{0}{square}{mbGenMone}%
-  \mccmchainboundpoint{#3}{#2}{0}{circle}{mbGenOrgIn}%
-  \coordinate (mbGenOrgC) at (#3.center);%
-  \mccmchainboundpoint{#3}{#4}{0}{circle}{mbGenOrgOut}%
-  \mccmchainboundpoint{#4}{#3}{0}{square}{mbGenMtwoNear}%
-  \mccmchainboundpoint{#4}{#5}{0}{square}{mbGenMtwoFar}%
-  \mccmchainboundpoint{#3}{#4}{0}{circle}{mbGenOrgReIn}%
-  \mccmchainboundpoint{#3}{#5}{0}{circle}{mbGenOrgReOut}%
-  \mccmchainboundpoint{#5}{#3}{0}{square}{mbGenWaste}%
-  \draw[mccmchainmetabline, shorten <=0.6pt,
-    draw=mccmchaincA] (mbGenMone) -- (mbGenOrgIn);%
-  \mccmchaindrawmetab@genchunk{mbGenOrgIn}{mbGenOrgC}{0.125}{0.25}{0}%
-  \mccmchaindrawmetab@genchunk{mbGenOrgC}{mbGenOrgOut}{0.25}{0.375}{0}%
-  \mccmchaindrawmetab@genchunk{mbGenOrgOut}{mbGenMtwoNear}{0.375}{0.5}{0}%
-  \draw[mccmchainmetabline, draw=mccmchaincB] (mbGenMtwoNear) -- (mbGenMtwoFar);%
-  \mccmchaindrawmetab@genchunk{mbGenMtwoFar}{mbGenOrgReIn}{0.5}{0.625}{0}%
-  \mccmchaindrawmetab@genchunk{mbGenOrgReIn}{mbGenOrgC}{0.625}{0.75}{0}%
-  \mccmchaindrawmetab@genchunk{mbGenOrgC}{mbGenOrgReOut}{0.75}{0.875}{0}%
-  \mccmchaindrawmetab@genchunk{mbGenOrgReOut}{mbGenWaste}{0.875}{1}{1}%
-}
 \def\mccmchaindraworgsplit#1#2#3{%
   \mccmchainboundpoint{#1}{#2}{0}{circle}{#1@out}%
   \mccmchainboundpoint{#2}{#1}{0}{circle}{#2@in}%
@@ -546,6 +450,7 @@
       mccmchainstealth/.tip={Stealth[scale=\mccmchainmetabarrowscale]},
       >={mccmchainstealth},
       demolabel/.style={font=\scriptsize, fill=white, inner sep=1pt},
+      demotextlabel/.style={font=\scriptsize},
       crossfeedbox/.style={draw=gray!60, dotted, line width=0.85pt,
         rounded corners=4pt, inner sep=0.26cm, fill=none},
     }
@@ -711,7 +616,7 @@
     \mccmchainrestackmet{feedCWasteNode}{mballWaste}
     \makeatother
 
-    % Lower interior: demographic exemplars (duplication, death, mutation).
+    % Lower interior: demographic exemplars (reproduction, death, mutation).
     % Death sits on chemostat center; dup/mut visual centers are equally spaced.
     \def\mccmchaindemocenterx{4.60}
     \def\mccmchaindemohalfspan{2.75}
@@ -746,9 +651,9 @@
     \makeatother
     \node[inner sep=0.10cm, fit=(mutP)(mutC1)(mutC2)] (mutDemoFit) {};
 
-    \node[demolabel, anchor=north] at (dupDemoFit.south |- 0,\mccmchaindemolabely) {Duplication};
-    \node[demolabel, anchor=north] at (dieO.south |- 0,\mccmchaindemolabely) {Death};
-    \node[demolabel, anchor=north] at (mutDemoFit.south |- 0,\mccmchaindemolabely) {Mutation};
+    \node[demotextlabel, anchor=north] at (dupDemoFit.south |- 0,\mccmchaindemolabely) {Reproduction};
+    \node[demotextlabel, anchor=north] at (dieO.south |- 0,\mccmchaindemolabely) {Death};
+    \node[demotextlabel, anchor=north] at (mutDemoFit.south |- 0,\mccmchaindemolabely) {Mutation};
 
     % Inflow: arrow terminates at the outer face of the intake nozzle.
     \def\mccmchaininflowMoneoffset{0.21}

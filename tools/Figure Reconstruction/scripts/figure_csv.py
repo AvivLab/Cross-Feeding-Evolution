@@ -6,7 +6,7 @@ from __future__ import annotations
 import csv
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterator, List
+from typing import Dict, List, Sequence
 
 from plot_hit_rescreen_panel import BATCHES_PER_CAMPAIGN, N_SIMS_PER_BATCH
 from plot_primary_batch_violins import PAPER_CONFIG_ORDER
@@ -36,16 +36,15 @@ def _y_in_paper(y: str) -> bool:
         return False
 
 
-def _iter_rows(csv_path: Path) -> Iterator[dict]:
-    """Stream CSV rows; avoid loading the full multi-hundred-MB table into RAM."""
+def _read_rows(csv_path: Path) -> List[dict]:
     with csv_path.open(newline="", encoding="utf-8") as fh:
-        yield from csv.DictReader(fh)
+        return list(csv.DictReader(fh))
 
 
 def load_by_suite(csv_path: Path) -> Dict[str, Dict[str, List[int]]]:
     """Fig. 3 panel (a): suite -> configuration -> batch hit counts."""
     out: Dict[str, Dict[str, List[int]]] = defaultdict(lambda: defaultdict(list))
-    for row in _iter_rows(csv_path):
+    for row in _read_rows(csv_path):
         if row.get("row_type") != ROW_PRIMARY_BATCH:
             continue
         configuration = row["configuration"]
@@ -66,7 +65,7 @@ def load_rescreen_batch_rates_by_suite(
     batches: Dict[str, Dict[str, Dict[int, List[float]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
     )
-    for row in _iter_rows(csv_path):
+    for row in _read_rows(csv_path):
         if row.get("row_type") != ROW_HIT:
             continue
         configuration = row["configuration"]
@@ -103,7 +102,7 @@ def load_rescreen_batch_counts_by_suite(
     batches: Dict[str, Dict[str, Dict[int, List[int]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
     )
-    for row in _iter_rows(csv_path):
+    for row in _read_rows(csv_path):
         if row.get("row_type") != row_type:
             continue
         configuration = row["configuration"]
