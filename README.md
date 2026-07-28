@@ -23,7 +23,7 @@ Simulate microbial evolution in a chemostat using the **MCCM** model (Minimal Cr
 
 ## About
 
-- **Version:** 1.1.5
+- **Version:** 1.1.6
 - **Last updated:** 2026-07-28
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
@@ -395,7 +395,7 @@ Scripts live in `tools/Figure Reconstruction/`. They rebuild five manuscript fig
 | `output/figures/simulation_loop_combined.pdf` | Supp. Fig. S1 | No — LaTeX only |
 | `output/supplementary/figures/supplementary_rescreen_ridgelines.png` | Supp. Fig. S2 (re-screen ridgelines) | Yes |
 
-Figs. 3 and S2 read one assembled table, `data/figure_reproduction/batch_hit_counts.csv`. That file is **not** in the download; you build it from your `OUTPUT_ROOT`. Axis labels such as “out of N” follow the N stored in your data (for example 1000 for paper-scale runs).
+Figs. 3 and S2 read one assembled table, `data/figure_reproduction/batch_hit_counts.csv`. That file is **not** in the download; you build it from your `OUTPUT_ROOT`.
 
 ### Requirements
 
