@@ -39,18 +39,6 @@
       0.001,
       0.05
     ],
-    "Death Decay Rate": [
-      0.1,
-      20.0
-    ],
-    "Duplication Sigmoid Intensity": [
-      0,
-      10
-    ],
-    "Duplication Sigmoid Midpoint": [
-      0,
-      5
-    ],
     "Flow Percentage": [
       0,
       50
@@ -78,7 +66,7 @@
     "Initial Organism Count": 100.0,
     "Investment Modifier": 1.0,
     "Number of Generations": 1000.0,
-    "Acetate Ratio": 20.0
+    "Acetate Ratio": 0.25
   },
   "primary_toggles": {
     "Homogeneous Population": true,
@@ -97,8 +85,9 @@
     "Enable LoF on B": false,
     "Enable LoF on T": false,
     "Downward Only Mutation": false,
+    "No Death": true,
     "Constant Death Probability": false,
-    "Constant Duplication Probability": false
+    "Constant Duplication Probability": true
   },
   "model": {
     "key": "simulation",
@@ -107,6 +96,6 @@
   "_export_meta": {
     "source_folder": "/Users/samuelrosean/Documents/Albert_Einstein/Aviv_PHD/GIT/MCCP_Enzymes",
     "session_id": "20260421-122154",
-    "note": "Primary: death decay and sigmoid duplication in bounds."
+    "note": "Primary trueNeutral: No Death + constant duplication; dup rate derived from sampled Flow Percentage."
   }
 }

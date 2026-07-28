@@ -66,7 +66,7 @@
     "Initial Organism Count": 100.0,
     "Investment Modifier": 1.0,
     "Number of Generations": 1000.0,
-    "Acetate Ratio": 20.0
+    "Acetate Ratio": 0.75
   },
   "primary_toggles": {
     "Homogeneous Population": true,

@@ -23,7 +23,7 @@ Simulate microbial evolution in a chemostat using the **MCCM** model (Minimal Cr
 
 ## About
 
-- **Version:** 1.1.2
+- **Version:** 1.1.3
 - **Last updated:** 2026-07-28
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
@@ -308,7 +308,7 @@ flowchart TB
 | `simulation/change_history.py` | Per-generation death, duplication, flow, and mutation counts |
 | `headless/primary_batch_campaign.py` | Command-line batch campaigns |
 | `headless/primary_hit_rescreen.py` | Command-line re-screening |
-| `settings/` | Paper Batch Runner JSON settings (7 suites × 2 configurations) |
+| `settings/` | Paper Batch Runner JSON settings (10 suites × 2 configurations) |
 | `tools/Figure Reconstruction/` | Scripts to build `batch_hit_counts.csv` and regenerate paper figures |
 | `docs/` | Bergman Lab logo and GUI screenshots for this README |
 
@@ -326,7 +326,7 @@ You can reproduce the workflow with two apps:
 
 2. **Batch Re-Runner** — Load a finished Batch Runner session and **re-screen hits** (and optionally non-hits) with fresh random seeds. The paper used 20 re-screen seeds per hit to estimate how often the same parameter set passes again. Results are written under `Re-Runs/` inside the session folder.
 
-Repeat steps 1–2 for each JSON in `settings/` that you need (seven fixed yield-ratio suites × two configurations). Large campaigns are long-running; the same JSON files work with the headless batch runner on a cluster (see `settings/README.md` and [Batch campaigns from the terminal (optional)](#batch-campaigns-from-the-terminal-optional)). Once you have primary batches and re-screens, the [figure reconstruction scripts](#reconstructing-paper-figures) can turn those outputs into plots.
+Repeat steps 1–2 for each JSON in `settings/` that you need (ten fixed yield-ratio suites × two configurations). Large campaigns are long-running; the same JSON files work with the headless batch runner on a cluster (see `settings/README.md` and [Batch campaigns from the terminal (optional)](#batch-campaigns-from-the-terminal-optional)). Once you have primary batches and re-screens, the [figure reconstruction scripts](#reconstructing-paper-figures) can turn those outputs into plots.
 
 ## Reconstructing paper figures
 
