@@ -1,5 +1,5 @@
-% Four configurations: neutral chemostat baseline + three selection regimes.
-% 2x2 panel grid; horizontal legend below; headers sit directly above each plot.
+% Two main-text configurations: Neutral Regime vs Selection Regime.
+% Side-by-side panels; horizontal legend below.
 \begin{tikzpicture}[font=\small, >=Stealth]
 
 \newlength{\mccmcondplotw}
@@ -8,8 +8,6 @@
 \newlength{\mccmcondcolB}
 \newlength{\mccmcondheadsep}
 \newlength{\mccmcondheaderh}
-\newlength{\mccmcondrowsep}
-\newlength{\mccmcondrowpitch}
 \newlength{\mccmcondheadtextw}
 \newlength{\mccmcondlabelpad}
 \newlength{\mccmcondlabelh}
@@ -19,23 +17,19 @@
 \newlength{\mccmcondbottombase}
 \newlength{\mccmcondheaderabove}
 
-% Compact 2x2 panel grid; horizontal legend below; headers sit directly above each plot.
-\setlength{\mccmcondcolgap}{0.03\textwidth}
-\setlength{\mccmcondplotw}{0.38\textwidth}
-\setlength{\mccmcondploth}{3.25cm}
+\setlength{\mccmcondcolgap}{0.04\textwidth}
+\setlength{\mccmcondplotw}{0.42\textwidth}
+\setlength{\mccmcondploth}{3.40cm}
 \setlength{\mccmcondcolB}{\dimexpr\mccmcondplotw+\mccmcondcolgap\relax}
 \setlength{\mccmcondlegendband}{0.46cm}
 \setlength{\mccmcondlegendgap}{0.32cm}
 \setlength{\mccmcondxlabelhang}{0.50cm}
 \setlength{\mccmcondbottombase}{\dimexpr\mccmcondlegendband+\mccmcondlegendgap\relax}
-\setlength{\mccmcondheadsep}{0.06cm} % gap between subtitle and plot top
-\setlength{\mccmcondheaderh}{0.42cm} % title + subtitle band (was too tight at 0.28cm)
+\setlength{\mccmcondheadsep}{0.06cm}
+\setlength{\mccmcondheaderh}{0.42cm}
 \setlength{\mccmcondlabelpad}{0.01cm}
 \setlength{\mccmcondlabelh}{0.14cm}
-\setlength{\mccmcondrowsep}{-0.60cm} % vertical gap between rows (more negative = tighter; plots unchanged)
 \setlength{\mccmcondheaderabove}{\dimexpr\mccmcondheadsep+\mccmcondheaderh+\mccmcondlabelpad+\mccmcondlabelh\relax}
-\setlength{\mccmcondrowpitch}{%
-  \dimexpr\mccmcondxlabelhang+\mccmcondploth+\mccmcondheaderabove+\mccmcondrowsep\relax}
 \setlength{\mccmcondheadtextw}{\dimexpr\mccmcondplotw-0.04cm\relax}
 
 \newlength{\mccmcondgridw}
@@ -61,20 +55,18 @@
     clip=false,
   },
   mccm death/.style={orange!85!black, thick, const plot, mark=none},
-  mccm dup ref/.style={blue!55!black, thick, const plot, mark=none},
   mccm dup primary/.style={blue!70!black, thick, const plot, mark=none},
   mccm dup coupled/.style={blue!60!black, thick, const plot, mark=none},
   mccm outflow/.style={gray!55!black, thick, dashed, const plot, mark=none},
 }
 
 \def\mccmcondphi{0.2}
-\def\mccmconddupflow{0.25} % phi/(1-phi) at phi=0.2
+\def\mccmconddupflow{0.25}
 \newcommand{\mccmcondaddoutflow}{%
   \addplot[mccm outflow]
     coordinates {(-1,\mccmcondphi) (5,\mccmcondphi)};
 }
 
-% Per-panel local bbox gives each subplot's own left edge (incl.\ ylabel).
 \newcommand{\mccmcondpaneldecor}[1]{%
   \coordinate (mccmplotleft) at (mccmpanel.south west);
   \node[
@@ -98,7 +90,7 @@
 \begin{scope}[shift={(\mccmcondxshift,0)}]
 
 % --- (a) Neutral ---
-\begin{scope}[local bounding box=mccmpanel, shift={(0,\dimexpr\mccmcondbottombase+\mccmcondrowpitch\relax)}]
+\begin{scope}[local bounding box=mccmpanel, shift={(0,\mccmcondbottombase)}]
   \begin{axis}[
     mccm cond combined,
     name=axA,
@@ -116,8 +108,8 @@
   \mccmcondpaneldecor{axA}
 \end{scope}
 
-% --- (b) Differential Death ---
-\begin{scope}[local bounding box=mccmpanel, shift={(\mccmcondcolB,\dimexpr\mccmcondbottombase+\mccmcondrowpitch\relax)}]
+% --- (b) Selection ---
+\begin{scope}[local bounding box=mccmpanel, shift={(\mccmcondcolB,\mccmcondbottombase)}]
   \begin{axis}[
     mccm cond combined,
     name=axB,
@@ -127,62 +119,19 @@
       coordinates {(-1,1) (0,1)};
     \addplot[orange!85!black, thick, domain=0:5, samples=120, forget plot]
       {exp(-2*x)};
-    \addplot[mccm dup ref]
-      coordinates {(-1,0.3) (5,0.3)};
+    \addplot[mccm dup primary]
+      coordinates {(-1,0) (0,0) (0,{1/(1+exp(12.5))})};
+    \addplot[blue!70!black, thick, domain=0:5, samples=120, forget plot]
+      {1/(1+exp(-5*(x-2.5)))};
     \mccmcondaddoutflow
   \end{axis}
   \def\mccmcondletter{b}%
-  \def\mccmcondtitle{Differential Death}%
-  \def\mccmcondsubtitle{eq.\ (4); Constant Reproduction}%
+  \def\mccmcondtitle{Selection Regime}%
+  \def\mccmcondsubtitle{eq.\ (4), (5)}%
   \mccmcondpaneldecor{axB}
 \end{scope}
 
-% --- (c) Differential Reproduction ---
-\begin{scope}[local bounding box=mccmpanel, shift={(0,\mccmcondbottombase)}]
-  \begin{axis}[
-    mccm cond combined,
-    name=axC,
-    at={(0,\mccmcondxlabelhang)}, anchor=south west,
-  ]
-    \addplot[mccm death]
-      coordinates {(-1,0) (5,0)};
-    \addplot[mccm dup primary]
-      coordinates {(-1,0) (0,0) (0,{1/(1+exp(12.5))})};
-    \addplot[blue!70!black, thick, domain=0:5, samples=120, forget plot]
-      {1/(1+exp(-5*(x-2.5)))};
-    \mccmcondaddoutflow
-  \end{axis}
-  \def\mccmcondletter{c}%
-  \def\mccmcondtitle{Differential Reproduction}%
-  \def\mccmcondsubtitle{No Death; eq.\ (5)}%
-  \mccmcondpaneldecor{axC}
-\end{scope}
-
-% --- (d) Selection ---
-\begin{scope}[local bounding box=mccmpanel, shift={(\mccmcondcolB,\mccmcondbottombase)}]
-  \begin{axis}[
-    mccm cond combined,
-    name=axD,
-    at={(0,\mccmcondxlabelhang)}, anchor=south west,
-  ]
-    \addplot[mccm death]
-      coordinates {(-1,1) (0,1)};
-    \addplot[orange!85!black, thick, domain=0:5, samples=120, forget plot]
-      {exp(-2*x)};
-    \addplot[mccm dup primary]
-      coordinates {(-1,0) (0,0) (0,{1/(1+exp(12.5))})};
-    \addplot[blue!70!black, thick, domain=0:5, samples=120, forget plot]
-      {1/(1+exp(-5*(x-2.5)))};
-    \mccmcondaddoutflow
-  \end{axis}
-  \def\mccmcondletter{d}%
-  \def\mccmcondtitle{Selection Regime}%
-  \def\mccmcondsubtitle{eq.\ (4), (5)}%
-  \mccmcondpaneldecor{axD}
-\end{scope}
-
-% --- Horizontal legend (centered under full figure, including y-axis labels) ---
-\node[fit=(axA)(axB)(axC)(axD), inner sep=0pt] (mccmfigbox) {};
+\node[fit=(axA)(axB), inner sep=0pt] (mccmfigbox) {};
 \path (mccmfigbox.south west |- 0,0.35\mccmcondlegendband)
   -- node[pos=0.5, anchor=center, font=\scriptsize, inner sep=0pt] {%
   \tikz[baseline=-0.5ex]{\draw[orange!85!black, line width=0.9pt] (0,0) -- (0.40cm,0);}%
@@ -193,7 +142,6 @@
   \ $P(\mathrm{outflow})$\ $(\phi=0.2)$%
 } (mccmfigbox.south east |- 0,0.35\mccmcondlegendband);
 
-% Reserve a little ink above panel headers (avoids tight pdfcrop clipping).
 \path ([yshift=0.10cm]current bounding box.north east);
 
 \end{scope}

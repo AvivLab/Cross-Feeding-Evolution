@@ -150,6 +150,7 @@ def plot_hit_counts_panel(
     show_xlabel: bool = True,
     show_xticklabels: bool = True,
     even_x_spacing: bool = False,
+    n_sims: int = N_SIMS_PER_BATCH,
     config_order: Sequence[Tuple[str, str, str]] = PAPER_CONFIG_ORDER,
 ) -> None:
     y_max = 0.0
@@ -181,7 +182,7 @@ def plot_hit_counts_panel(
         ax.set_xticklabels([])
     if show_xlabel:
         ax.set_xlabel("Fixed task energy yield ratio $Y$")
-    ax.set_ylabel("Mean batch hit count $H_b$ (out of 1000)")
+    ax.set_ylabel(f"Mean batch hit count $H_b$ (out of {int(n_sims)})")
     ax.set_ylim(0, y_max * 1.08)
     ax.grid(axis="y", alpha=0.25, linewidth=0.8)
     apply_figure3_axis_typography(ax)
@@ -197,6 +198,7 @@ def plot_supplementary(
     mean_hits: Dict[str, List[float]],
     std_hits: Dict[str, List[float]],
     output_path: Path,
+    n_sims: int = N_SIMS_PER_BATCH,
 ) -> None:
     fig, ax = plt.subplots(figsize=(9.0, 5.6))
     plot_hit_counts_panel(
@@ -206,6 +208,7 @@ def plot_supplementary(
         std_hits=std_hits,
         show_legend=True,
         panel_letter=None,
+        n_sims=n_sims,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
@@ -232,13 +235,18 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument(
         "--n-sims",
         type=int,
-        default=N_SIMS_PER_BATCH,
-        help="Simulations per batch (default: 1000)",
+        default=None,
+        help="Simulations per batch (default: infer from CSV n_runs / n_sims_per_batch)",
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     by_suite = load_by_suite(args.csv)
-    y_vals, x_labels, mean_hits, std_hits = suite_means(by_suite, n_sims=args.n_sims)
+    n_sims = args.n_sims
+    if n_sims is None:
+        from figure_csv import infer_n_sims_from_rows
+
+        n_sims = infer_n_sims_from_rows(args.csv)
+    y_vals, x_labels, mean_hits, std_hits = suite_means(by_suite, n_sims=n_sims)
 
     print(f"CSV: {args.csv}")
     for label, idx in zip(x_labels, range(len(x_labels))):
@@ -253,6 +261,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         mean_hits=mean_hits,
         std_hits=std_hits,
         output_path=args.output,
+        n_sims=n_sims,
     )
     print(f"Wrote: {args.output}")
     return 0

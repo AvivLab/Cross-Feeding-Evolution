@@ -5,7 +5,7 @@ Scripts to regenerate every figure in the main manuscript and Supplementary Info
 | Output | Figure |
 |--------|--------|
 | `output/figures/mccm_chain.pdf` | Main text Fig. 1 |
-| `output/figures/mccm_four_conditions.pdf` | Main text Fig. 2 |
+| `output/figures/mccm_two_conditions.pdf` | Main text Fig. 2 |
 | `output/figures/figure3_hit_panels.png` | Main text Fig. 3 |
 | `output/figures/simulation_loop_combined.pdf` | Supp. Fig. S1 |
 | `output/supplementary/figures/supplementary_rescreen_ridgelines.png` | Supp. Fig. S2 |
@@ -17,23 +17,26 @@ Scripts to regenerate every figure in the main manuscript and Supplementary Info
 
 ## Data
 
-The data-driven figures read `data/figure_reproduction/batch_hit_counts.csv`. Place that file under `data/figure_reproduction/` before running the rebuild script.
+The data-driven figures read `data/figure_reproduction/batch_hit_counts.csv`. That file is **not** shipped in the download. Build it from your campaign sessions:
 
-To build the CSV from aggregated campaign outputs, collect:
-
-- `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` — primary-batch hit counts for all suites (Neutral and Death+Duplication)
-- `Re-Runs/sessions/` — hit re-screen CSVs (one folder per campaign session)
-- `Re-Runs-NonHits/sessions/` — optional non-hit re-screens (included in the CSV but not used by the five published figures)
-
-By default the script resolves these paths from the lab’s shared campaign output directory. If you mirror that tree locally, run:
+1. Run paper Batch Runner / headless campaigns (and re-screens) into one output root.
+2. Aggregate and assemble:
 
 ```bash
 cd "tools/Figure Reconstruction"
 export PYTHONPATH="scripts${PYTHONPATH:+:$PYTHONPATH}"
-python3 scripts/assemble_figure_data.py
+python3 scripts/build_summary_hit_counts.py --output-root /path/to/OUTPUT_ROOT
+python3 scripts/assemble_figure_data.py --output-root /path/to/OUTPUT_ROOT
 ```
 
-This writes `data/figure_reproduction/batch_hit_counts.csv`.
+`build_summary_hit_counts.py` writes:
+
+- `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` — per-batch hit counts for Neutral and Death+Duplication across paper Y suites
+- `Re-Runs/sessions/` (and optional `Re-Runs-NonHits/sessions/`) — staged from each session’s in-folder re-screen outputs
+
+`assemble_figure_data.py` then writes `data/figure_reproduction/batch_hit_counts.csv`.
+
+You can combine those steps with `--build-summary` on `assemble_figure_data.py`.
 
 ## Quick rebuild
 
@@ -49,10 +52,11 @@ Outputs land in `output/`. TikZ PDFs are also written under `figures/Used/`.
 | Script | Output |
 |--------|--------|
 | `build_mccm_chain_figure.sh` | Fig. 1 — MCCM chain |
-| `build_mccm_four_conditions_figure.sh` | Fig. 2 — life-cycle mode schematic (four modes illustrated; campaigns use Neutral + Death+Duplication) |
+| `build_mccm_two_conditions_figure.sh` | Fig. 2 — Neutral vs Death+Duplication (Selection) rate curves |
 | `build_simulation_loop_combined_figure.sh` | Supp. Fig. S1 — simulation loop |
 | `build_chemostat_snapshot_pdfs.sh` | Chemostat panels embedded in S1 (called by the script above) |
-| `assemble_figure_data.py` | `batch_hit_counts.csv` from aggregated campaign outputs |
+| `build_summary_hit_counts.py` | `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` (+ stage `Re-Runs/sessions/`) |
+| `assemble_figure_data.py` | `batch_hit_counts.csv` from Summary + Re-Runs |
 | `plot_figure3_panels.py` | Fig. 3 panels (a–b); defaults to Neutral + Death+Duplication |
 | `plot_rescreen_ridgeline_supplementary.py` | Supp. Fig. S2 — hit re-screen ridgelines (same two configs by default) |
 

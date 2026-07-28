@@ -17,7 +17,6 @@ from plot_hit_rescreen_panel import (
 )
 from plot_primary_batch_violins import MAIN_CONFIG_ORDER, PAPER_CONFIG_ORDER
 from plot_ratio_supplementary import (
-    N_SIMS_PER_BATCH,
     apply_panel_figure_layout,
     load_by_suite,
     plot_hit_counts_panel,
@@ -34,20 +33,27 @@ def plot_figure3_panels(
     hit_csv: Path | None,
     rescreen_sessions_dir: Path | None,
     output_path: Path,
-    n_sims: int,
+    n_sims: int | None = None,
     config_order: ConfigOrder = MAIN_CONFIG_ORDER,
 ) -> None:
     if data_csv is not None:
+        from figure_csv import infer_campaign_shape
         from figure_csv import load_by_suite as load_by_suite_csv
         from figure_csv import load_rescreen_batch_rates_by_suite as load_rates_csv
 
         by_suite = load_by_suite_csv(data_csv)
         rescreen_by_suite = load_rates_csv(data_csv)
+        if n_sims is None:
+            n_sims, _, _ = infer_campaign_shape(data_csv)
     else:
         if hit_csv is None or rescreen_sessions_dir is None:
             raise ValueError("Provide --data-csv or both --hit-csv and --rescreen-sessions-dir")
         by_suite = load_by_suite(hit_csv)
         rescreen_by_suite = load_rescreen_batch_rates_by_suite(rescreen_sessions_dir)
+        if n_sims is None:
+            from figure_csv import infer_n_sims_from_rows
+
+            n_sims = infer_n_sims_from_rows(hit_csv)
 
     y_vals, _, mean_hits, std_hits = suite_means(
         by_suite, n_sims=n_sims, config_order=config_order
@@ -67,6 +73,7 @@ def plot_figure3_panels(
         show_xlabel=False,
         show_xticklabels=True,
         even_x_spacing=True,
+        n_sims=n_sims,
         config_order=config_order,
     )
     plot_rescreen_panel(
@@ -124,8 +131,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument(
         "--n-sims",
         type=int,
-        default=N_SIMS_PER_BATCH,
-        help="Simulations per batch (default: 1000)",
+        default=None,
+        help="Simulations per batch (default: infer from data CSV)",
     )
     parser.add_argument(
         "--configs",

@@ -604,7 +604,8 @@ def plot_regime_ridgeline_panel(
         )
     if show_ylabel:
         ax.set_ylabel("Fixed task energy yield ratio $Y$")
-    x_ticks = np.arange(0, n_rescreen + 1, 5)
+    x_step = 1 if n_rescreen <= 10 else 5
+    x_ticks = np.arange(0, n_rescreen + 1, x_step)
     ax.set_xticks(x_ticks)
     if show_xticklabels:
         ax.set_xticklabels([f"{int(t)}" for t in x_ticks])
@@ -638,9 +639,11 @@ def plot_rescreen_ridgeline_figure(
 ) -> None:
     """Supplementary ridgeline figure: one panel per regime, ridges by fixed $Y$."""
     if data_csv is not None:
+        from figure_csv import infer_campaign_shape
         from figure_csv import load_rescreen_batch_counts_by_suite as load_counts_csv
 
         batch_counts_by_suite = load_counts_csv(data_csv, row_type=data_row_type)
+        _, _, inferred_n_rescreen = infer_campaign_shape(data_csv)
     else:
         if sessions_dir is None:
             raise ValueError("sessions_dir or data_csv is required")
@@ -648,8 +651,9 @@ def plot_rescreen_ridgeline_figure(
             sessions_dir,
             csv_glob=csv_glob,
         )
+        inferred_n_rescreen = N_RESCREEN
     if xlabel is None:
-        xlabel = f"Re-run successes per draw (out of {N_RESCREEN})"
+        xlabel = f"Re-run successes per hit (out of {inferred_n_rescreen})"
     if y_vals is None:
         y_vals = [y for _, y, _ in SUITE_ORDER]
 
@@ -678,6 +682,7 @@ def plot_rescreen_ridgeline_figure(
             batch_counts_by_suite=batch_counts_by_suite,
             ridge_spacing=ridge_spacing,
             ridge_height=ridge_height,
+            n_rescreen=inferred_n_rescreen,
             show_xlabel=True,
             show_xticklabels=True,
             show_ylabel=panel_idx % ncols == 0,

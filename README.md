@@ -23,7 +23,7 @@ Simulate microbial evolution in a chemostat using the **MCCM** model (Minimal Cr
 
 ## About
 
-- **Version:** 1.1.3
+- **Version:** 1.1.5
 - **Last updated:** 2026-07-28
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
@@ -316,46 +316,151 @@ flowchart TB
 
 ## Recreating the paper results
 
-The paper’s quantitative campaigns compare **Neutral** and **Death+Duplication** across fixed task-energy yield ratios. (Fig. 2’s schematic still shows four life-cycle modes; only these two configurations are used for the batch results.)
+This section walks through recreating the paper’s **batch campaigns** (the Monte Carlo searches behind Fig. 3 and Supp. Fig. S2). Fig. 2’s schematic curves do not need these runs; see [Reconstructing paper figures](#reconstructing-paper-figures) for that.
 
-**All Batch Runner JSON settings used in the paper are included in the `settings/` folder** — one file per suite and configuration (e.g. `settings/Fixed_3_ratio/e_Death+Dup_Fixed_3.json`). See `settings/README.md` for the full list of suites and config names.
+### What you are reproducing
 
-You can reproduce the workflow with two apps:
+The paper compares two regimes across ten fixed task-energy yield ratios (Y):
 
-1. **Batch Runner** — Open a JSON from `settings/` via **Load JSON Settings**, choose a save folder, and run the campaign. Each file runs 100 batches of 1000 simulations with the paper’s metric filters and parameter bounds. Session output includes hit counts and the parameter vectors that hit.
+| Regime | Settings file prefix | Example |
+|--------|----------------------|---------|
+| Neutral | `a_` | `settings/Fixed_3_ratio/a_trueNeutral_Fixed_3.json` |
+| Death+Duplication | `e_` | `settings/Fixed_3_ratio/e_Death+Dup_Fixed_3.json` |
 
-2. **Batch Re-Runner** — Load a finished Batch Runner session and **re-screen hits** (and optionally non-hits) with fresh random seeds. The paper used 20 re-screen seeds per hit to estimate how often the same parameter set passes again. Results are written under `Re-Runs/` inside the session folder.
+There are **20 settings files** in total (10 Y suites × 2 regimes). Each paper-scale file runs **100 batches × 1000 simulations**. Full details are in `settings/README.md`.
 
-Repeat steps 1–2 for each JSON in `settings/` that you need (ten fixed yield-ratio suites × two configurations). Large campaigns are long-running; the same JSON files work with the headless batch runner on a cluster (see `settings/README.md` and [Batch campaigns from the terminal (optional)](#batch-campaigns-from-the-terminal-optional)). Once you have primary batches and re-screens, the [figure reconstruction scripts](#reconstructing-paper-figures) can turn those outputs into plots.
+Pick one folder on disk to hold everything (call it `OUTPUT_ROOT`). Keeping all campaigns under that one root makes the figure scripts easy to run later.
+
+### Step 1 — Run each batch campaign
+
+For every JSON you need (all 20 for a full recreation):
+
+**Option A — GUI**
+
+1. Start the launcher (`python main.py`) and open **Batch Runner**.
+2. Click **Load JSON Settings** and choose a file from `settings/` (for example `Fixed_3_ratio/e_Death+Dup_Fixed_3.json`).
+3. Click **Choose Save Folder** and select your `OUTPUT_ROOT` (or a subfolder of it).
+4. Click **Run Batch** and wait until it finishes.
+
+**Option B — terminal** (same settings; useful on a cluster):
+
+```bash
+python headless/primary_batch_campaign.py \
+  settings/Fixed_3_ratio/e_Death+Dup_Fixed_3.json \
+  --output-dir OUTPUT_ROOT
+```
+
+Each finished campaign writes a **session folder** containing offload data, a campaign summary JSON, and—when there are hits—a hit-count CSV. Note that path; you need it for re-screening.
+
+### Step 2 — Re-screen the hits
+
+For each finished session that found hits:
+
+**Option A — GUI**
+
+1. Open **Batch Re-Runner** from the launcher.
+2. Click **Choose Session Folder** and select that campaign’s session directory.
+3. Leave mode on **Hits Only** (usual paper workflow).
+4. Set **Seeds per point (N)** to **20** (paper value).
+5. Click **Run Re-screen**.
+
+**Option B — terminal:**
+
+```bash
+python headless/primary_hit_rescreen.py SESSION_FOLDER --n-seeds 20
+```
+
+Re-screen results are written inside that session under `Re-Runs/`.
+
+Optional: also re-screen non-hits (`--non-hits` or the GUI **Non-Hits Only** / **Both** modes) if you want those comparisons.
+
+### Step 3 — Repeat until you have what you need
+
+- Full paper recreation: run Steps 1–2 for all **20** settings files.
+- Smaller test: run a few suites first (the figure scripts will plot whatever Neutral / Death+Duplication data they find).
+
+These campaigns are long. Once primary batches and re-screens are done, continue below to turn the outputs into figures.
+
+---
 
 ## Reconstructing paper figures
 
-Figure-reconstruction scripts live in `tools/Figure Reconstruction/`. They regenerate the five figures in the main manuscript and Supplementary Information PDF (Figs. 1–3 and Supp. Figs. S1–S2) from a single table, `batch_hit_counts.csv` (typically several hundred MB). That CSV is **not** included in the download; build or copy it locally first.
+Scripts live in `tools/Figure Reconstruction/`. They rebuild five manuscript figures:
 
-**Typical workflow:**
+| Output file | Figure | Needs campaign data? |
+|-------------|--------|----------------------|
+| `output/figures/mccm_chain.pdf` | Fig. 1 (MCCM chain) | No — LaTeX only |
+| `output/figures/mccm_two_conditions.pdf` | Fig. 2 (two regimes) | No — LaTeX only |
+| `output/figures/figure3_hit_panels.png` | Fig. 3 (hit counts + re-screen rates) | Yes |
+| `output/figures/simulation_loop_combined.pdf` | Supp. Fig. S1 | No — LaTeX only |
+| `output/supplementary/figures/supplementary_rescreen_ridgelines.png` | Supp. Fig. S2 (re-screen ridgelines) | Yes |
 
-1. Complete Batch Runner campaigns and Batch Re-Runner re-screens for the configurations you need (see [Recreating the paper results](#recreating-the-paper-results)).
-2. Build `batch_hit_counts.csv` and place it under `tools/Figure Reconstruction/data/figure_reproduction/`.
+Figs. 3 and S2 read one assembled table, `data/figure_reproduction/batch_hit_counts.csv`. That file is **not** in the download; you build it from your `OUTPUT_ROOT`. Axis labels such as “out of N” follow the N stored in your data (for example 1000 for paper-scale runs).
 
-   Finished campaigns must be collected in the aggregated output layout that `assemble_figure_data.py` expects: a summary table at `Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` and re-screen exports under `Re-Runs/sessions/` (plus `Re-Runs-NonHits/sessions/` if non-hit re-screens were run). From this folder:
+### Requirements
 
-   ```bash
-   cd "tools/Figure Reconstruction"
-   export PYTHONPATH="scripts${PYTHONPATH:+:$PYTHONPATH}"
-   python3 scripts/assemble_figure_data.py
-   ```
+- Python packages from `requirements.txt` (already installed if you followed [Install and run](#install-and-run)).
+- For Figs. 1–2 and S1: **pdfLaTeX**, **latexmk**, and **pdfcrop**.
+- For Figs. 3 and S2: finished campaigns + re-screens under one `OUTPUT_ROOT` ([Recreating the paper results](#recreating-the-paper-results)).
 
-   See `tools/Figure Reconstruction/README.md` for details. TikZ schematics (Figs. 1–2 and Supp. Fig. S1) can be rebuilt without the CSV; Figs. 3 and S2 need it.
+### Step 1 — Point the scripts at your campaigns
 
-3. Rebuild figures:
+Open a terminal in this download’s root, then:
 
-   ```bash
-   ./rebuild_all_figures.sh
-   ```
+```bash
+cd "tools/Figure Reconstruction"
+export PYTHONPATH="scripts${PYTHONPATH:+:$PYTHONPATH}"
+```
 
-   Outputs appear under `output/`. TikZ schematic PDFs are also written under `figures/Used/`.
+(`PYTHONPATH=scripts` lets the Python plot scripts import each other.)
 
-**Requirements for figures:** Python packages from `requirements.txt`, plus **pdfLaTeX**, **latexmk**, and **pdfcrop** for the TikZ schematics. See `tools/Figure Reconstruction/README.md` for the full output list and individual script options.
+Replace `/path/to/OUTPUT_ROOT` below with the folder that contains your campaign sessions.
+
+### Step 2 — Build the figure data table
+
+This does two jobs in order:
+
+1. **Summarize** every Neutral / Death+Duplication session into one compare CSV, and copy each session’s `Re-Runs/` into a shared staging area.
+2. **Assemble** that summary plus re-screens into `batch_hit_counts.csv`.
+
+```bash
+python3 scripts/build_summary_hit_counts.py --output-root /path/to/OUTPUT_ROOT
+python3 scripts/assemble_figure_data.py --output-root /path/to/OUTPUT_ROOT
+```
+
+Or both at once:
+
+```bash
+python3 scripts/assemble_figure_data.py --output-root /path/to/OUTPUT_ROOT --build-summary
+```
+
+What you get:
+
+| File | Meaning |
+|------|---------|
+| `OUTPUT_ROOT/Summary/Summary_Ratio/primary_batch_compare_hit_counts.csv` | Per-batch hit counts by suite and regime |
+| `OUTPUT_ROOT/Re-Runs/sessions/` | Staged re-screen folders used by the assembler |
+| `tools/Figure Reconstruction/data/figure_reproduction/batch_hit_counts.csv` | Unified table for Figs. 3 and S2 |
+
+If you already have a `batch_hit_counts.csv`, you can place it at that last path and skip this step.
+
+### Step 3 — Rebuild all figures
+
+Still inside `tools/Figure Reconstruction/`:
+
+```bash
+./rebuild_all_figures.sh
+```
+
+Finished files land under `output/`. TikZ PDFs are also copied under `figures/Used/`.
+
+To rebuild one figure only, run the matching script under `scripts/` (see `tools/Figure Reconstruction/README.md`, or pass `--help` to a plot script).
+
+### If something is missing
+
+- **Figs. 1, 2, or S1 fail:** install pdfLaTeX / latexmk / pdfcrop and try again.
+- **Figs. 3 or S2 fail with a missing CSV:** finish Steps 1–2 above, or copy an existing `batch_hit_counts.csv` into `data/figure_reproduction/`.
+- **Fig. 3 looks empty for some Y values:** that suite’s Neutral or Death+Duplication campaign (or its re-screen) is missing from `OUTPUT_ROOT`.
 
 ---
 

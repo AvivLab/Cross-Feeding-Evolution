@@ -75,7 +75,6 @@ def main(argv: Iterable[str] | None = None) -> int:
         output_path=args.output,
         figsize=figsize,
         csv_glob="primary_hit_rescreen_*.csv",
-        xlabel="Re-run successes per hit (out of 20)",
         config_order=config_order,
     )
     if args.data_csv is not None:
