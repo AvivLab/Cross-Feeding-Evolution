@@ -23,6 +23,9 @@ Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Ch
 
 ## About
 
+- **Version:** 1.0.0
+- **Last updated:** 2026-07-28
+
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.
 
 It implements the in silico chemostat evolution model used in *No Trade-Offs Required: Cross-Feeding From Survival Alone* (Samuel Rosean & Aviv Bergman).
