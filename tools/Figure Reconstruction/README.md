@@ -4,8 +4,8 @@ Scripts to regenerate every figure in the main manuscript and Supplementary Info
 
 | Output | Figure |
 |--------|--------|
-| `output/figures/mccp_chain.pdf` | Main text Fig. 1 |
-| `output/figures/mccp_four_conditions.pdf` | Main text Fig. 2 |
+| `output/figures/mccm_chain.pdf` | Main text Fig. 1 |
+| `output/figures/mccm_four_conditions.pdf` | Main text Fig. 2 |
 | `output/figures/figure3_hit_panels.png` | Main text Fig. 3 |
 | `output/figures/simulation_loop_combined.pdf` | Supp. Fig. S1 |
 | `output/supplementary/figures/supplementary_rescreen_ridgelines.png` | Supp. Fig. S2 |
@@ -48,8 +48,8 @@ Outputs land in `output/`. TikZ PDFs are also written under `figures/Used/`.
 
 | Script | Output |
 |--------|--------|
-| `build_mccp_chain_figure.sh` | Fig. 1 — MCCP chain |
-| `build_mccp_four_conditions_figure.sh` | Fig. 2 — four regimes (Neutral / Differential Death / Differential Reproduction / Differential Death and Reproduction) |
+| `build_mccm_chain_figure.sh` | Fig. 1 — MCCM chain |
+| `build_mccm_four_conditions_figure.sh` | Fig. 2 — four regimes (Neutral / Differential Death / Differential Reproduction / Differential Death and Reproduction) |
 | `build_simulation_loop_combined_figure.sh` | Supp. Fig. S1 — simulation loop |
 | `build_chemostat_snapshot_pdfs.sh` | Chemostat panels embedded in S1 (called by the script above) |
 | `assemble_figure_data.py` | `batch_hit_counts.csv` from aggregated campaign outputs |

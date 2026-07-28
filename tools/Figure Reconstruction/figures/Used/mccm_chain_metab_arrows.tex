@@ -1,0 +1,272 @@
+% Measure half-width (square) or radius (circle) from the rendered node shape.
+\def\mccmchainbound@measure#1#2{%
+  \pgfpointanchor{#1}{east}\pgf@xa=\pgf@x
+  \pgfpointanchor{#1}{center}\pgf@xc=\pgf@x
+  \pgfmathsetmacro{#2}{(\pgf@xa-\pgf@xc)/1cm}%
+}
+% L-infinity boundary on an axis-aligned square: #2=(...) target coordinate expression.
+\def\mccmchainbound@square@i#1#2#3{%
+  \coordinate (mccm@bnd@vec) at ($ (#2) - (#1.center) $);%
+  \pgf@process{\pgfpointanchor{mccm@bnd@vec}{center}}%
+  \pgfmathsetmacro{\mccm@dx}{\pgf@x/1cm}%
+  \pgfmathsetmacro{\mccm@dy}{\pgf@y/1cm}%
+  \pgfmathparse{abs(\mccm@dx)>=abs(\mccm@dy) ? (\mccm@dx>=0 ? 1 : -1) : (\mccm@dy>=0 ? 2 : -2)}%
+  \pgfmathtruncatemacro{\mccm@anchnum}{\pgfmathresult}%
+  \ifnum\mccm@anchnum=1 \def\mccm@anch{east}\else
+    \ifnum\mccm@anchnum=-1 \def\mccm@anch{west}\else
+      \ifnum\mccm@anchnum=2 \def\mccm@anch{north}\else
+        \def\mccm@anch{south}\fi\fi\fi
+  \coordinate (#3) at (#1.\mccm@anch);%
+}
+\def\mccmchainbound@square#1#2#3#4{%
+  \mccmchainbound@square@i{#1}{#2.center}{#4}%
+}
+\def\mccmchainbound@squaretoc#1#2#3#4{%
+  \mccmchainbound@square@i{#1}{#2}{#4}%
+}
+\def\mccmchainbound@circle#1#2#3#4{%
+  \mccmchainbound@measure{#1}{\mccm@r}%
+  \coordinate (#4) at ($(#1.center)!{\mccm@r cm}!(#2.center)$);%
+}
+\def\mccmchainbound@circletoc#1#2#3#4{%
+  \mccmchainbound@measure{#1}{\mccm@r}%
+  \coordinate (#4) at ($(#1.center)!{\mccm@r cm}!(#2)$);%
+}
+\def\mccmchainboundpoint#1#2#3#4#5{%
+  \def\mccmchainbound@shape{#4}%
+  \ifx\mccmchainbound@shape circle
+    \mccmchainbound@circle{#1}{#2}{#3}{#5}%
+  \else
+    \mccmchainbound@square{#1}{#2}{#3}{#5}%
+  \fi
+}
+\def\mccmchainboundpointtoc#1#2#3#4#5{%
+  \def\mccmchainbound@shape{#4}%
+  \ifx\mccmchainbound@shape circle
+    \mccmchainbound@circletoc{#1}{#2}{#3}{#5}%
+  \else
+    \mccmchainbound@squaretoc{#1}{#2}{#3}{#5}%
+  \fi
+}
+\def\mccmchainmetabarrowscale{0.58}
+\def\mccmchainminiarrowscale{0.055}  % ~10% of featured metabolism arrowheads
+\def\mccmchainthickarrowscale{0.70}
+\def\mccmchainmetabtip{-{Stealth[scale=\mccmchainmetabarrowscale]}}
+\def\mccmchainarrowcolorstop{0.74}  % colored gradient ends here
+\def\mccmchainarrowshaftstop{0.78}  % colored shaft ends; head zone follows
+\def\mccmchainarrowshorten{0.9pt}
+\def\mccmchainminiarrowcolorstop{0.74}
+\def\mccmchainminiarrowshaftstop{0.78}
+\def\mccmchainminiarrowshorten{0.15pt}
+\def\mccmchainheadmaskextend{1.1pt}  % bg cap past shortened path end
+\def\mccmchainpipesarrowshorten{2.6pt}
+\def\mccmchaingradsteps{20}
+\def\mccmchaingradlast{19}
+\def\mccmchainsegoverlap{0.40}
+\colorlet{mccmchainmetabbg}{white}
+\colorlet{mccmchainminimetabbg}{white}
+\def\mccmchainmetabmaskwidth{1.24pt}
+\def\mccmchainminimetabmaskwidth{0.42pt}
+% Background under the head-only zone (colorstop -> sink).
+\def\mccmchaindrawmetab@masktip#1#2{%
+  \coordinate (mbMaskStart) at ($(#1)!\mccmchainarrowcolorstop!(#2)$);%
+  \draw[line width=\mccmchainmetabmaskwidth, line cap=butt, draw=mccmchainmetabbg]
+    (mbMaskStart) -- (#2);%
+}
+\def\mccmchaindrawminimetab@masktip#1#2{%
+  \coordinate (mbMiniMaskStart) at ($(#1)!\mccmchainminiarrowcolorstop!(#2)$);%
+  \draw[line width=\mccmchainminimetabmaskwidth, line cap=butt, draw=mccmchainminimetabbg]
+    (mbMiniMaskStart) -- (#2);%
+}
+% Solid shaft bridge from gradient end to shaft stop (butt cap, no arrow).
+\def\mccmchaindrawmetab@shaftbridge#1#2#3{%
+  \coordinate (mbMetColorEnd) at ($(#1)!\mccmchainarrowcolorstop!(#2)$);%
+  \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
+  \draw[mccmchainmetabline@butt, draw=#3] (mbMetColorEnd) -- (mbMetShaftEnd);%
+}
+\def\mccmchaindrawminimetab@shaftbridge#1#2#3{%
+  \coordinate (mbMiniColorEnd) at ($(#1)!\mccmchainminiarrowcolorstop!(#2)$);%
+  \coordinate (mbMiniShaftEnd) at ($(#1)!\mccmchainminiarrowshaftstop!(#2)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=#3]
+    (mbMiniColorEnd) -- (mbMiniShaftEnd);%
+}
+% Tipped segment on head zone only, then hide any forward stub past Stealth.
+\def\mccmchaindrawmetab@maskforward#1#2{%
+  \draw[line width=\mccmchainmetabmaskwidth, line cap=butt, draw=mccmchainmetabbg]
+    ($(#2)!-\mccmchainheadmaskextend!(#1)$) -- (#2);%
+}
+\def\mccmchaindrawminimetab@maskforward#1#2{%
+  \draw[line width=\mccmchainminimetabmaskwidth, line cap=butt, draw=mccmchainminimetabbg]
+    ($(#2)!-\mccmchainheadmaskextend!(#1)$) -- (#2);%
+}
+\def\mccmchaindrawmetab@head#1#2#3{%
+  \draw[mccmchainmetabline@butt,
+    -{Stealth[scale=\mccmchainmetabarrowscale, fill={#3}]},
+    shorten >=\mccmchainarrowshorten, draw=#3] (#1) -- (#2);%
+  \mccmchaindrawmetab@maskforward{#1}{#2}%
+}
+\def\mccmchaindrawminimetab@head#1#2#3{%
+  \draw[mccmchainminimetabline, line cap=butt,
+    -{Stealth[scale=\mccmchainminiarrowscale, fill={#3}]},
+    shorten >=\mccmchainminiarrowshorten, draw=#3] (#1) -- (#2);%
+  \mccmchaindrawminimetab@maskforward{#1}{#2}%
+}
+% Mask + head-only tip (#1=leg start for mask, #2=shaft end, #3=sink, #4=color).
+\def\mccmchaindrawmetab@splithead#1#2#3#4{%
+  \mccmchaindrawmetab@masktip{#1}{#3}%
+  \mccmchaindrawmetab@head{#2}{#3}{#4}%
+}
+\def\mccmchaindrawminimetab@splithead#1#2#3#4{%
+  \mccmchaindrawminimetab@masktip{#1}{#3}%
+  \mccmchaindrawminimetab@head{#2}{#3}{#4}%
+}
+% Solid final leg: shaft body, bridge, then head only.
+\def\mccmchaindrawmetab@finalleg#1#2#3{%
+  \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
+  \draw[mccmchainmetabline@butt, draw=#3] (#1) -- (mbMetShaftEnd);%
+  \mccmchaindrawmetab@splithead{#1}{mbMetShaftEnd}{#2}{#3}%
+}
+\def\mccmchaindrawminimetab@finalleg#1#2#3{%
+  \coordinate (mbMiniShaftEnd) at ($(#1)!\mccmchainminiarrowshaftstop!(#2)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=#3] (#1) -- (mbMiniShaftEnd);%
+  \mccmchaindrawminimetab@splithead{#1}{mbMiniShaftEnd}{#2}{#3}%
+}
+% Round cap fill at path corners / chunk joints (#2 = color).
+\def\mccmchainmetab@joint#1#2{%
+  \fill[#2] (#1) circle [radius=0.60pt];%
+}
+\def\mccmchainminimetab@joint#1#2{%
+  \fill[#2] (#1) circle [radius=0.19pt];%
+}
+% Redraw a metabolite square above metabolism arrows at its port.
+\def\mccmchainrestackmet#1#2{\node[#2] at (#1) {};}
+\tikzset{
+  mccmchainmetabline/.style={line width=1.12pt, line cap=round, line join=round},
+  mccmchainmetabline@butt/.style={mccmchainmetabline, line cap=butt},
+  mccmchainminimetabline/.style={line width=0.35pt, line cap=round, line join=round},
+}
+% #1=segment index, #2=1 on final chunk (body stops at bodystop)
+\def\mccmchainmetab@segloc#1#2#3{%
+  \ifnum#2=1
+    \pgfmathsetmacro{\mccmchainlocA}{max(0, (#1-\mccmchainsegoverlap)*\mccmchainarrowcolorstop/\mccmchaingradsteps)}%
+    \pgfmathsetmacro{\mccmchainlocB}{min(\mccmchainarrowcolorstop, (#1+1)*\mccmchainarrowcolorstop/\mccmchaingradsteps)}%
+  \else
+    \pgfmathsetmacro{\mccmchainlocA}{max(0, (#1-\mccmchainsegoverlap)/\mccmchaingradsteps)}%
+    \pgfmathsetmacro{\mccmchainlocB}{min(1, (#1+1)/\mccmchaingradsteps)}%
+  \fi
+}
+% Draw one gradient chunk; #1--#2 endpoints, #3=path offset in [0,1), #4=1 on final chunk
+\def\mccmchaindrawmetab@chunk#1#2#3#4{%
+  \ifnum#4=1
+    \foreach \j in {0,1,...,\mccmchaingradlast} {%
+      \mccmchainmetab@segloc{\j}{1}{}%
+      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA/4}%
+      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB/4}%
+      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
+      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
+      \pgfmathsetmacro{\mccmchainmixval}{int(round(100*(1-0.5*(\mccmchainuA+\mccmchainuB))))}%
+      \edef\mccmchainmixexp{\mccmchainmixval}%
+      \ifnum\j=\mccmchaingradlast
+        \def\mccmchaincapline{mccmchainmetabline@butt}%
+      \else
+        \def\mccmchaincapline{mccmchainmetabline}%
+      \fi
+      \draw[\mccmchaincapline,
+        draw=mccmchaincA!\mccmchainmixexp!mccmchaincB] (mbMetPtA) -- (mbMetPtB);%
+    }%
+    \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
+    \mccmchaindrawmetab@shaftbridge{#1}{#2}{mccmchaincB}%
+    \mccmchaindrawmetab@splithead{#1}{mbMetShaftEnd}{#2}{mccmchaincB};%
+  \else
+    \foreach \j in {0,1,...,\mccmchaingradlast} {%
+      \mccmchainmetab@segloc{\j}{0}{}%
+      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA/4}%
+      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB/4}%
+      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
+      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
+      \pgfmathsetmacro{\mccmchainmixval}{int(round(100*(1-0.5*(\mccmchainuA+\mccmchainuB))))}%
+      \edef\mccmchainmixexp{\mccmchainmixval}%
+      \draw[mccmchainmetabline,
+        draw=mccmchaincA!\mccmchainmixexp!mccmchaincB] (mbMetPtA) -- (mbMetPtB);%
+    }%
+  \fi
+}
+% Metabolism path: boundary points toward the next node (works at any angle).
+\def\mccmchaindrawmetabarrow@i#1#2#3#4#5#6#7#8{%
+  \colorlet{mccmchaincA}{#5}%
+  \colorlet{mccmchaincB}{#6}%
+  \mccmchainboundpoint{#2}{#3}{0}{square}{mbMetSrc}%
+  \mccmchainboundpoint{#3}{#2}{0}{circle}{mbMetOrgIn}%
+  \coordinate (mbMetOrgCtr) at (#3.center);%
+  \mccmchainboundpoint{#3}{#4}{0}{circle}{mbMetOrgOut}%
+  \mccmchainboundpoint{#4}{#3}{0}{square}{mbMetSnk}%
+  % Source->organism leg: single draw (calc foreach fails to render on this span).
+  \draw[mccmchainmetabline, shorten <=0.6pt,
+    draw=mccmchaincA] (mbMetSrc) -- (mbMetOrgIn);%
+  \mccmchaindrawmetab@chunk{mbMetOrgIn}{mbMetOrgCtr}{0.25}{0}%
+  \mccmchaindrawmetab@chunk{mbMetOrgCtr}{mbMetOrgOut}{0.5}{0}%
+  \mccmchaindrawmetab@chunk{mbMetOrgOut}{mbMetSnk}{0.75}{1}%
+  \mccmchainmetab@joint{mbMetOrgIn}{mccmchaincA!88!mccmchaincB}%
+  \mccmchainmetab@joint{mbMetOrgCtr}{mccmchaincA!50!mccmchaincB}%
+  \mccmchainmetab@joint{mbMetOrgOut}{mccmchaincA!12!mccmchaincB}%
+}
+\def\mccmchaindrawmetabarrow#1#2#3#4#5#6{%
+  \mccmchaindrawmetabarrow@i{#1}{#2}{#3}{#4}{#5}{#6}{\mccmchainmballradius}{\mccmchainmballradius}%
+}
+% Like metabarrow but continues center -> sink (no radial exit onto the org rim).
+\def\mccmchaindrawmetabarrowCtrSink#1#2#3#4#5#6{%
+  \colorlet{mccmchaincA}{#5}%
+  \colorlet{mccmchaincB}{#6}%
+  \mccmchainboundpoint{#2}{#3}{0}{square}{mbMetSrc}%
+  \mccmchainboundpoint{#3}{#2}{0}{circle}{mbMetOrgIn}%
+  \coordinate (mbMetOrgCtr) at (#3.center);%
+  \mccmchainboundpoint{#4}{#3}{0}{square}{mbMetSnk}%
+  \draw[mccmchainmetabline, shorten <=0.6pt,
+    draw=mccmchaincA] (mbMetSrc) -- (mbMetOrgIn);%
+  \mccmchaindrawmetab@chunk{mbMetOrgIn}{mbMetOrgCtr}{0.25}{0}%
+  \mccmchaindrawmetab@chunk{mbMetOrgCtr}{mbMetSnk}{0.5}{1}%
+  \mccmchainmetab@joint{mbMetOrgIn}{mccmchaincA!88!mccmchaincB}%
+  \mccmchainmetab@joint{mbMetOrgCtr}{mccmchaincA!50!mccmchaincB}%
+}
+\def\mccmchaindrawmetabarrowExt#1#2#3#4#5#6#7#8{%
+  \mccmchaindrawmetabarrow@i{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
+}
+% On-circle lane anchors: #1=org node, #2/#3=in/out coord names, #4=radius (cm), #5=height fraction.
+\def\mccmchainorglanecoords#1#2#3#4#5{%
+  \pgfmathsetmacro{\mccm@lanef}{#5}%
+  \pgfmathsetmacro{\mccm@laney}{\mccm@lanef* (#4)}%
+  \pgfmathsetmacro{\mccm@lanex}{sqrt(1-\mccm@lanef*\mccm@lanef)*(#4)}%
+  \coordinate (#2) at ($(#1.center)+({-\mccm@lanex cm},{\mccm@laney cm})$);%
+  \coordinate (#3) at ($(#1.center)+({\mccm@lanex cm},{\mccm@laney cm})$);%
+}
+% Dual-task lane: route through org above/below center (closer to midline than metabolite rows).
+\def\mccmchainorglanefrac{0.48}  % |lane height| as fraction of org radius
+\def\mccmchaindrawmetabarrowLane#1#2#3#4#5#6#7{%
+  \colorlet{mccmchaincA}{#5}%
+  \colorlet{mccmchaincB}{#6}%
+  \makeatletter
+  \pgfpointanchor{#3}{center}\pgf@ya=\pgf@y
+  \pgfpointanchor{#2}{center}\pgf@yb=\pgf@y
+  \pgfmathsetmacro{\mccm@dy}{(\pgf@yb-\pgf@ya)/1cm}%
+  \makeatother
+  \pgfmathsetmacro{\mccm@lanef}{\mccmchainorglanefrac}%
+  \ifdim\mccm@dy pt<0pt
+    \pgfmathsetmacro{\mccm@lanef}{-\mccm@lanef}%
+  \fi
+  \mccmchainbound@measure{#3}{\mccm@orgr}%
+  \pgfmathsetmacro{\mccm@lanex}{sqrt(1-\mccm@lanef*\mccm@lanef)*\mccm@orgr}%
+  \pgfmathsetmacro{\mccm@laney}{\mccm@lanef*\mccm@orgr}%
+  \coordinate (#1@In) at ($(#3.center)+({-\mccm@lanex cm},{\mccm@laney cm})$);%
+  \coordinate (#1@Out) at ($(#3.center)+({\mccm@lanex cm},{\mccm@laney cm})$);%
+  \coordinate (#1@Mid) at ($(#3.center)+(0 cm,{\mccm@laney cm})$);%
+  \mccmchainboundpointtoc{#2}{#1@In}{0}{square}{#1@Src}%
+  \mccmchainboundpoint{#4}{#3}{0}{square}{#1@Snk}%
+  \draw[mccmchainmetabline, shorten <=0.6pt, draw=mccmchaincA]
+    (#1@Src) -- (#1@In);%
+  \mccmchaindrawmetab@chunk{#1@In}{#1@Mid}{0.25}{0}%
+  \mccmchaindrawmetab@chunk{#1@Mid}{#1@Out}{0.5}{0}%
+  \mccmchaindrawmetab@chunk{#1@Out}{#1@Snk}{0.75}{1}%
+  \mccmchainmetab@joint{#1@In}{mccmchaincA!88!mccmchaincB}%
+  \mccmchainmetab@joint{#1@Mid}{mccmchaincA!50!mccmchaincB}%
+  \mccmchainmetab@joint{#1@Out}{mccmchaincA!12!mccmchaincB}%
+}

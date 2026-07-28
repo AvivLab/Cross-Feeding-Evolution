@@ -1,0 +1,808 @@
+% Editable MCCM motif figure (panels a--c).
+% Build: scripts/build_mccm_chain_figure.sh  ->  figures/Used/mccm_chain.pdf
+% The paper includes the PDF, not this file directly.
+\makeatletter
+% Measure half-width (square) or radius (circle) from the rendered node shape.
+\def\mccmchainbound@measure#1#2{%
+  \pgfpointanchor{#1}{east}\pgf@xa=\pgf@x
+  \pgfpointanchor{#1}{center}\pgf@xc=\pgf@x
+  \pgfmathsetmacro{#2}{(\pgf@xa-\pgf@xc)/1cm}%
+}
+% L-infinity boundary on an axis-aligned square: #2=(...) target coordinate expression.
+\def\mccmchainbound@square@i#1#2#3{%
+  \coordinate (mccm@bnd@vec) at ($ (#2) - (#1.center) $);%
+  \pgf@process{\pgfpointanchor{mccm@bnd@vec}{center}}%
+  \pgfmathsetmacro{\mccm@dx}{\pgf@x/1cm}%
+  \pgfmathsetmacro{\mccm@dy}{\pgf@y/1cm}%
+  \pgfmathparse{abs(\mccm@dx)>=abs(\mccm@dy) ? (\mccm@dx>=0 ? 1 : -1) : (\mccm@dy>=0 ? 2 : -2)}%
+  \pgfmathtruncatemacro{\mccm@anchnum}{\pgfmathresult}%
+  \ifnum\mccm@anchnum=1 \def\mccm@anch{east}\else
+    \ifnum\mccm@anchnum=-1 \def\mccm@anch{west}\else
+      \ifnum\mccm@anchnum=2 \def\mccm@anch{north}\else
+        \def\mccm@anch{south}\fi\fi\fi
+  \coordinate (#3) at (#1.\mccm@anch);%
+}
+\def\mccmchainbound@square#1#2#3#4{%
+  \mccmchainbound@square@i{#1}{#2.center}{#4}%
+}
+\def\mccmchainbound@squaretoc#1#2#3#4{%
+  \mccmchainbound@square@i{#1}{#2}{#4}%
+}
+\def\mccmchainbound@circle#1#2#3#4{%
+  \mccmchainbound@measure{#1}{\mccm@r}%
+  \coordinate (#4) at ($(#1.center)!{\mccm@r cm}!(#2.center)$);%
+}
+\def\mccmchainbound@circletoc#1#2#3#4{%
+  \mccmchainbound@measure{#1}{\mccm@r}%
+  \coordinate (#4) at ($(#1.center)!{\mccm@r cm}!(#2)$);%
+}
+\def\mccmchainboundpoint#1#2#3#4#5{%
+  \def\mccmchainbound@shape{#4}%
+  \ifx\mccmchainbound@shape circle
+    \mccmchainbound@circle{#1}{#2}{#3}{#5}%
+  \else
+    \mccmchainbound@square{#1}{#2}{#3}{#5}%
+  \fi
+}
+\def\mccmchainboundpointtoc#1#2#3#4#5{%
+  \def\mccmchainbound@shape{#4}%
+  \ifx\mccmchainbound@shape circle
+    \mccmchainbound@circletoc{#1}{#2}{#3}{#5}%
+  \else
+    \mccmchainbound@squaretoc{#1}{#2}{#3}{#5}%
+  \fi
+}
+\def\mccmchainmetabarrowscale{0.58}
+\def\mccmchainminiarrowscale{0.055}  % ~10% of featured metabolism arrowheads
+\def\mccmchainthickarrowscale{0.70}
+\def\mccmchainmetabtip{-{Stealth[scale=\mccmchainmetabarrowscale]}}
+\def\mccmchainarrowcolorstop{0.74}  % colored gradient ends here
+\def\mccmchainarrowshaftstop{0.78}  % colored shaft ends; head zone follows
+\def\mccmchainarrowshorten{0.9pt}
+\def\mccmchainminiarrowcolorstop{0.74}
+\def\mccmchainminiarrowshaftstop{0.78}
+\def\mccmchainminiarrowshorten{0.15pt}
+\def\mccmchainheadmaskextend{1.1pt}  % bg cap past shortened path end
+\def\mccmchainpipesarrowshorten{2.6pt}
+\def\mccmchaingradsteps{20}
+\def\mccmchaingradlast{19}
+\def\mccmchainsegoverlap{0.40}
+\colorlet{mccmchainmetabbg}{white}
+\colorlet{mccmchainminimetabbg}{white}
+\def\mccmchainmetabmaskwidth{1.24pt}
+\def\mccmchainminimetabmaskwidth{0.42pt}
+% Background under the head-only zone (colorstop -> sink).
+\def\mccmchaindrawmetab@masktip#1#2{%
+  \coordinate (mbMaskStart) at ($(#1)!\mccmchainarrowcolorstop!(#2)$);%
+  \draw[line width=\mccmchainmetabmaskwidth, line cap=butt, draw=mccmchainmetabbg]
+    (mbMaskStart) -- (#2);%
+}
+\def\mccmchaindrawminimetab@masktip#1#2{%
+  \coordinate (mbMiniMaskStart) at ($(#1)!\mccmchainminiarrowcolorstop!(#2)$);%
+  \draw[line width=\mccmchainminimetabmaskwidth, line cap=butt, draw=mccmchainminimetabbg]
+    (mbMiniMaskStart) -- (#2);%
+}
+% Solid shaft bridge from gradient end to shaft stop (butt cap, no arrow).
+\def\mccmchaindrawmetab@shaftbridge#1#2#3{%
+  \coordinate (mbMetColorEnd) at ($(#1)!\mccmchainarrowcolorstop!(#2)$);%
+  \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
+  \draw[mccmchainmetabline@butt, draw=#3] (mbMetColorEnd) -- (mbMetShaftEnd);%
+}
+\def\mccmchaindrawminimetab@shaftbridge#1#2#3{%
+  \coordinate (mbMiniColorEnd) at ($(#1)!\mccmchainminiarrowcolorstop!(#2)$);%
+  \coordinate (mbMiniShaftEnd) at ($(#1)!\mccmchainminiarrowshaftstop!(#2)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=#3]
+    (mbMiniColorEnd) -- (mbMiniShaftEnd);%
+}
+% Tipped segment on head zone only, then hide any forward stub past Stealth.
+\def\mccmchaindrawmetab@maskforward#1#2{%
+  \draw[line width=\mccmchainmetabmaskwidth, line cap=butt, draw=mccmchainmetabbg]
+    ($(#2)!-\mccmchainheadmaskextend!(#1)$) -- (#2);%
+}
+\def\mccmchaindrawminimetab@maskforward#1#2{%
+  \draw[line width=\mccmchainminimetabmaskwidth, line cap=butt, draw=mccmchainminimetabbg]
+    ($(#2)!-\mccmchainheadmaskextend!(#1)$) -- (#2);%
+}
+\def\mccmchaindrawmetab@head#1#2#3{%
+  \draw[mccmchainmetabline@butt,
+    -{Stealth[scale=\mccmchainmetabarrowscale, fill={#3}]},
+    shorten >=\mccmchainarrowshorten, draw=#3] (#1) -- (#2);%
+  \mccmchaindrawmetab@maskforward{#1}{#2}%
+}
+\def\mccmchaindrawminimetab@head#1#2#3{%
+  \draw[mccmchainminimetabline, line cap=butt,
+    -{Stealth[scale=\mccmchainminiarrowscale, fill={#3}]},
+    shorten >=\mccmchainminiarrowshorten, draw=#3] (#1) -- (#2);%
+  \mccmchaindrawminimetab@maskforward{#1}{#2}%
+}
+% Mask + head-only tip (#1=leg start for mask, #2=shaft end, #3=sink, #4=color).
+\def\mccmchaindrawmetab@splithead#1#2#3#4{%
+  \mccmchaindrawmetab@masktip{#1}{#3}%
+  \mccmchaindrawmetab@head{#2}{#3}{#4}%
+}
+\def\mccmchaindrawminimetab@splithead#1#2#3#4{%
+  \mccmchaindrawminimetab@masktip{#1}{#3}%
+  \mccmchaindrawminimetab@head{#2}{#3}{#4}%
+}
+% Solid final leg: shaft body, bridge, then head only.
+\def\mccmchaindrawmetab@finalleg#1#2#3{%
+  \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
+  \draw[mccmchainmetabline@butt, draw=#3] (#1) -- (mbMetShaftEnd);%
+  \mccmchaindrawmetab@splithead{#1}{mbMetShaftEnd}{#2}{#3}%
+}
+\def\mccmchaindrawminimetab@finalleg#1#2#3{%
+  \coordinate (mbMiniShaftEnd) at ($(#1)!\mccmchainminiarrowshaftstop!(#2)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=#3] (#1) -- (mbMiniShaftEnd);%
+  \mccmchaindrawminimetab@splithead{#1}{mbMiniShaftEnd}{#2}{#3}%
+}
+% Round cap fill at path corners / chunk joints (#2 = color).
+\def\mccmchainmetab@joint#1#2{%
+  \fill[#2] (#1) circle [radius=0.60pt];%
+}
+\def\mccmchainminimetab@joint#1#2{%
+  \fill[#2] (#1) circle [radius=0.19pt];%
+}
+% Redraw a metabolite square above metabolism arrows at its port.
+\def\mccmchainrestackmet#1#2{\node[#2] at (#1) {};}
+\tikzset{
+  mccmchainmetabline/.style={line width=1.12pt, line cap=round, line join=round},
+  mccmchainmetabline@butt/.style={mccmchainmetabline, line cap=butt},
+  mccmchainminimetabline/.style={line width=0.35pt, line cap=round, line join=round},
+}
+% #1=segment index, #2=1 on final chunk (body stops at bodystop)
+\def\mccmchainmetab@segloc#1#2#3{%
+  \ifnum#2=1
+    \pgfmathsetmacro{\mccmchainlocA}{max(0, (#1-\mccmchainsegoverlap)*\mccmchainarrowcolorstop/\mccmchaingradsteps)}%
+    \pgfmathsetmacro{\mccmchainlocB}{min(\mccmchainarrowcolorstop, (#1+1)*\mccmchainarrowcolorstop/\mccmchaingradsteps)}%
+  \else
+    \pgfmathsetmacro{\mccmchainlocA}{max(0, (#1-\mccmchainsegoverlap)/\mccmchaingradsteps)}%
+    \pgfmathsetmacro{\mccmchainlocB}{min(1, (#1+1)/\mccmchaingradsteps)}%
+  \fi
+}
+% Draw one gradient chunk; #1--#2 endpoints, #3=path offset in [0,1), #4=1 on final chunk
+\def\mccmchaindrawmetab@chunk#1#2#3#4{%
+  \ifnum#4=1
+    \foreach \j in {0,1,...,\mccmchaingradlast} {%
+      \mccmchainmetab@segloc{\j}{1}{}%
+      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA/4}%
+      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB/4}%
+      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
+      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
+      \pgfmathsetmacro{\mccmchainmixval}{int(round(100*(1-0.5*(\mccmchainuA+\mccmchainuB))))}%
+      \edef\mccmchainmixexp{\mccmchainmixval}%
+      \ifnum\j=\mccmchaingradlast
+        \def\mccmchaincapline{mccmchainmetabline@butt}%
+      \else
+        \def\mccmchaincapline{mccmchainmetabline}%
+      \fi
+      \draw[\mccmchaincapline,
+        draw=mccmchaincA!\mccmchainmixexp!mccmchaincB] (mbMetPtA) -- (mbMetPtB);%
+    }%
+    \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
+    \mccmchaindrawmetab@shaftbridge{#1}{#2}{mccmchaincB}%
+    \mccmchaindrawmetab@splithead{#1}{mbMetShaftEnd}{#2}{mccmchaincB};%
+  \else
+    \foreach \j in {0,1,...,\mccmchaingradlast} {%
+      \mccmchainmetab@segloc{\j}{0}{}%
+      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA/4}%
+      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB/4}%
+      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
+      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
+      \pgfmathsetmacro{\mccmchainmixval}{int(round(100*(1-0.5*(\mccmchainuA+\mccmchainuB))))}%
+      \edef\mccmchainmixexp{\mccmchainmixval}%
+      \draw[mccmchainmetabline,
+        draw=mccmchaincA!\mccmchainmixexp!mccmchaincB] (mbMetPtA) -- (mbMetPtB);%
+    }%
+  \fi
+}
+% Metabolism path: boundary points toward the next node (works at any angle).
+\def\mccmchaindrawmetabarrow@i#1#2#3#4#5#6#7#8{%
+  \colorlet{mccmchaincA}{#5}%
+  \colorlet{mccmchaincB}{#6}%
+  \mccmchainboundpoint{#2}{#3}{0}{square}{mbMetSrc}%
+  \mccmchainboundpoint{#3}{#2}{0}{circle}{mbMetOrgIn}%
+  \coordinate (mbMetOrgCtr) at (#3.center);%
+  \mccmchainboundpoint{#3}{#4}{0}{circle}{mbMetOrgOut}%
+  \mccmchainboundpoint{#4}{#3}{0}{square}{mbMetSnk}%
+  % Source->organism leg: single draw (calc foreach fails to render on this span).
+  \draw[mccmchainmetabline, shorten <=0.6pt,
+    draw=mccmchaincA] (mbMetSrc) -- (mbMetOrgIn);%
+  \mccmchaindrawmetab@chunk{mbMetOrgIn}{mbMetOrgCtr}{0.25}{0}%
+  \mccmchaindrawmetab@chunk{mbMetOrgCtr}{mbMetOrgOut}{0.5}{0}%
+  \mccmchaindrawmetab@chunk{mbMetOrgOut}{mbMetSnk}{0.75}{1}%
+  \mccmchainmetab@joint{mbMetOrgIn}{mccmchaincA!88!mccmchaincB}%
+  \mccmchainmetab@joint{mbMetOrgCtr}{mccmchaincA!50!mccmchaincB}%
+  \mccmchainmetab@joint{mbMetOrgOut}{mccmchaincA!12!mccmchaincB}%
+}
+\def\mccmchaindrawmetabarrow#1#2#3#4#5#6{%
+  \mccmchaindrawmetabarrow@i{#1}{#2}{#3}{#4}{#5}{#6}{\mccmchainmballradius}{\mccmchainmballradius}%
+}
+\def\mccmchaindrawmetabarrowExt#1#2#3#4#5#6#7#8{%
+  \mccmchaindrawmetabarrow@i{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
+}
+% On-circle lane anchors: #1=org node, #2/#3=in/out coord names, #4=radius (cm), #5=height fraction.
+\def\mccmchainorglanecoords#1#2#3#4#5{%
+  \pgfmathsetmacro{\mccm@lanef}{#5}%
+  \pgfmathsetmacro{\mccm@laney}{\mccm@lanef* (#4)}%
+  \pgfmathsetmacro{\mccm@lanex}{sqrt(1-\mccm@lanef*\mccm@lanef)*(#4)}%
+  \coordinate (#2) at ($(#1.center)+({-\mccm@lanex cm},{\mccm@laney cm})$);%
+  \coordinate (#3) at ($(#1.center)+({\mccm@lanex cm},{\mccm@laney cm})$);%
+}
+% Dual-task lane: route through org above/below center (closer to midline than metabolite rows).
+\def\mccmchainorglanefrac{0.48}  % |lane height| as fraction of org radius
+\def\mccmchaindrawmetabarrowLane#1#2#3#4#5#6#7{%
+  \colorlet{mccmchaincA}{#5}%
+  \colorlet{mccmchaincB}{#6}%
+  \makeatletter
+  \pgfpointanchor{#3}{center}\pgf@ya=\pgf@y
+  \pgfpointanchor{#2}{center}\pgf@yb=\pgf@y
+  \pgfmathsetmacro{\mccm@dy}{(\pgf@yb-\pgf@ya)/1cm}%
+  \makeatother
+  \pgfmathsetmacro{\mccm@lanef}{\mccmchainorglanefrac}%
+  \ifdim\mccm@dy pt<0pt
+    \pgfmathsetmacro{\mccm@lanef}{-\mccm@lanef}%
+  \fi
+  \pgfmathsetmacro{\mccm@lanex}{sqrt(1-\mccm@lanef*\mccm@lanef)*0.141}%
+  \pgfmathsetmacro{\mccm@laney}{\mccm@lanef*0.141}%
+  \coordinate (#1@In) at ($(#3.center)+({-\mccm@lanex cm},{\mccm@laney cm})$);%
+  \coordinate (#1@Out) at ($(#3.center)+({\mccm@lanex cm},{\mccm@laney cm})$);%
+  \coordinate (#1@Mid) at ($(#3.center)+(0 cm,{\mccm@laney cm})$);%
+  \mccmchainboundpointtoc{#2}{#1@In}{0}{square}{#1@Src}%
+  \mccmchainboundpoint{#4}{#3}{0}{square}{#1@Snk}%
+  \draw[mccmchainmetabline, shorten <=0.6pt, draw=mccmchaincA]
+    (#1@Src) -- (#1@In);%
+  \mccmchaindrawmetab@chunk{#1@In}{#1@Mid}{0.25}{0}%
+  \mccmchaindrawmetab@chunk{#1@Mid}{#1@Out}{0.5}{0}%
+  \mccmchaindrawmetab@chunk{#1@Out}{#1@Snk}{0.75}{1}%
+  \mccmchainmetab@joint{#1@In}{mccmchaincA!88!mccmchaincB}%
+  \mccmchainmetab@joint{#1@Mid}{mccmchaincA!50!mccmchaincB}%
+  \mccmchainmetab@joint{#1@Out}{mccmchaincA!12!mccmchaincB}%
+}
+% #1--#2 endpoints, #3--#4 global path range [0,1], #5=1 on final chunk only
+\def\mccmchaindrawmetab@genchunk#1#2#3#4#5{%
+  \ifnum#5=1
+    \foreach \j in {0,1,...,\mccmchaingradlast} {%
+      \mccmchainmetab@segloc{\j}{1}{}%
+      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA*(#4-#3)}%
+      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB*(#4-#3)}%
+      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
+      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
+      \pgfmathsetmacro{\mccmchainmixA}{100*(1-2*\mccmchainuA)}%
+      \pgfmathsetmacro{\mccmchainmixB}{100*(1-2*(\mccmchainuB-0.5))}%
+      \ifdim\mccmchainuA pt<0.5pt
+        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixA))}%
+        \edef\mccmchainmixexp{\mccmchainmixval}%
+        \def\mccmchaincolA{mccmchaincA}%
+        \def\mccmchaincolB{mccmchaincB}%
+      \else
+        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixB))}%
+        \edef\mccmchainmixexp{\mccmchainmixval}%
+        \def\mccmchaincolA{mccmchaincB}%
+        \def\mccmchaincolB{mccmchaincC}%
+      \fi
+      \ifnum\j=\mccmchaingradlast
+        \def\mccmchaincapline{mccmchainmetabline@butt}%
+      \else
+        \def\mccmchaincapline{mccmchainmetabline}%
+      \fi
+      \draw[\mccmchaincapline,
+        draw=\mccmchaincolA!\mccmchainmixexp!\mccmchaincolB] (mbMetPtA) -- (mbMetPtB);%
+    }%
+    \pgfmathsetmacro{\mccmchainuTip}{#3+\mccmchainarrowshaftstop*(#4-#3)}%
+    \ifdim\mccmchainuTip pt<0.5pt
+      \pgfmathsetmacro{\mccmchainmixTip}{int(round(100*(1-2*\mccmchainuTip)))}%
+      \edef\mccmchainmixTipExp{\mccmchainmixTip}%
+      \def\mccmchaintipColA{mccmchaincA}%
+      \def\mccmchaintipColB{mccmchaincB}%
+    \else
+      \pgfmathsetmacro{\mccmchainmixTip}{int(round(100*(1-2*(\mccmchainuTip-0.5))))}%
+      \edef\mccmchainmixTipExp{\mccmchainmixTip}%
+      \def\mccmchaintipColA{mccmchaincB}%
+      \def\mccmchaintipColB{mccmchaincC}%
+    \fi
+    \coordinate (mbMetShaftEnd) at ($(#1)!\mccmchainarrowshaftstop!(#2)$);%
+    \edef\mccmchaintipcolor{\mccmchaintipColA!\mccmchainmixTipExp!\mccmchaintipColB}%
+    \mccmchaindrawmetab@shaftbridge{#1}{#2}{\mccmchaintipcolor}%
+    \mccmchaindrawmetab@splithead{#1}{mbMetShaftEnd}{#2}{\mccmchaintipcolor};%
+  \else
+    \foreach \j in {0,1,...,\mccmchaingradlast} {%
+      \mccmchainmetab@segloc{\j}{0}{}%
+      \pgfmathsetmacro{\mccmchainuA}{#3+\mccmchainlocA*(#4-#3)}%
+      \pgfmathsetmacro{\mccmchainuB}{#3+\mccmchainlocB*(#4-#3)}%
+      \coordinate (mbMetPtA) at ($(#1)!{\mccmchainlocA}!(#2)$);%
+      \coordinate (mbMetPtB) at ($(#1)!{\mccmchainlocB}!(#2)$);%
+      \pgfmathsetmacro{\mccmchainmixA}{100*(1-2*\mccmchainuA)}%
+      \pgfmathsetmacro{\mccmchainmixB}{100*(1-2*(\mccmchainuB-0.5))}%
+      \ifdim\mccmchainuA pt<0.5pt
+        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixA))}%
+        \edef\mccmchainmixexp{\mccmchainmixval}%
+        \def\mccmchaincolA{mccmchaincA}%
+        \def\mccmchaincolB{mccmchaincB}%
+      \else
+        \pgfmathsetmacro{\mccmchainmixval}{int(round(\mccmchainmixB))}%
+        \edef\mccmchainmixexp{\mccmchainmixval}%
+        \def\mccmchaincolA{mccmchaincB}%
+        \def\mccmchaincolB{mccmchaincC}%
+      \fi
+      \draw[mccmchainmetabline,
+        draw=\mccmchaincolA!\mccmchainmixexp!\mccmchaincolB] (mbMetPtA) -- (mbMetPtB);%
+    }%
+  \fi
+}
+% Generalist chain: M1 -> org -> M2 -> org -> waste (one organism, both tasks).
+\def\mccmchaindrawmetabarrowGeneralist#1#2#3#4#5#6#7#8{%
+  \colorlet{mccmchaincA}{#6}%
+  \colorlet{mccmchaincB}{#7}%
+  \colorlet{mccmchaincC}{#8}%
+  \mccmchainboundpoint{#2}{#3}{0}{square}{mbGenMone}%
+  \mccmchainboundpoint{#3}{#2}{0}{circle}{mbGenOrgIn}%
+  \coordinate (mbGenOrgC) at (#3.center);%
+  \mccmchainboundpoint{#3}{#4}{0}{circle}{mbGenOrgOut}%
+  \mccmchainboundpoint{#4}{#3}{0}{square}{mbGenMtwoNear}%
+  \mccmchainboundpoint{#4}{#5}{0}{square}{mbGenMtwoFar}%
+  \mccmchainboundpoint{#3}{#4}{0}{circle}{mbGenOrgReIn}%
+  \mccmchainboundpoint{#3}{#5}{0}{circle}{mbGenOrgReOut}%
+  \mccmchainboundpoint{#5}{#3}{0}{square}{mbGenWaste}%
+  \draw[mccmchainmetabline, shorten <=0.6pt,
+    draw=mccmchaincA] (mbGenMone) -- (mbGenOrgIn);%
+  \mccmchaindrawmetab@genchunk{mbGenOrgIn}{mbGenOrgC}{0.125}{0.25}{0}%
+  \mccmchaindrawmetab@genchunk{mbGenOrgC}{mbGenOrgOut}{0.25}{0.375}{0}%
+  \mccmchaindrawmetab@genchunk{mbGenOrgOut}{mbGenMtwoNear}{0.375}{0.5}{0}%
+  \draw[mccmchainmetabline, draw=mccmchaincB] (mbGenMtwoNear) -- (mbGenMtwoFar);%
+  \mccmchaindrawmetab@genchunk{mbGenMtwoFar}{mbGenOrgReIn}{0.5}{0.625}{0}%
+  \mccmchaindrawmetab@genchunk{mbGenOrgReIn}{mbGenOrgC}{0.625}{0.75}{0}%
+  \mccmchaindrawmetab@genchunk{mbGenOrgC}{mbGenOrgReOut}{0.75}{0.875}{0}%
+  \mccmchaindrawmetab@genchunk{mbGenOrgReOut}{mbGenWaste}{0.875}{1}{1}%
+}
+\def\mccmchaindraworgsplit#1#2#3{%
+  \mccmchainboundpoint{#1}{#2}{0}{circle}{#1@out}%
+  \mccmchainboundpoint{#2}{#1}{0}{circle}{#2@in}%
+  \draw[->, thin, #3] (#1@out) -- (#2@in);%
+}
+% Four-segment mutant ring: fixed arc count/angles; radius and stroke scale with node size.
+\def\mccmchainmutbordercolor{magenta!80!black}
+\def\mccmchaindrawmutborder#1{%
+  \draw
+    let \p1=(#1.east), \p2=(#1.west),
+        \n1={0.5*(\x1-\x2)},
+        \n2={max(0.30pt, 0.35*\n1)}
+    in [line width=\n2, draw=\mccmchainmutbordercolor, line cap=round]
+      (#1.center) ++(58:\n1) arc (58:122:\n1)
+      (#1.center) ++(-32:\n1) arc (-32:32:\n1)
+      (#1.center) ++(238:\n1) arc (238:302:\n1)
+      (#1.center) ++(148:\n1) arc (148:212:\n1);%
+}
+% Mini scatter motifs (~33% scale) for background chemostat activity.
+% Each motif is a complete biological event: task A/B, generalist, cross-feed, or demography.
+\def\mccmchainminimballradius{0.0325}
+\def\mccmchainminiorgradius{0.0465}
+\def\mccmchainminimetabhspan{0.24}
+\def\mccmchainminimetabtip{-{Stealth[scale=\mccmchainminiarrowscale]}}
+\def\mccmchaindrawminimetabA#1#2#3#4#5{%
+  \node[orgcellMini] (#1O) at (#2,#3) {};%
+  \node[mballMiniMone] (#1M) at ($(#1O)+(-\mccmchainminimetabhspan,#4)$) {};%
+  \node[mballMiniMtwo] (#1M2) at ($(#1O)+(\mccmchainminimetabhspan,#5)$) {};%
+  \mccmchainboundpoint{#1M}{#1O}{0}{square}{#1M@out}%
+  \mccmchainboundpoint{#1O}{#1M}{0}{circle}{#1O@inA}%
+  \mccmchainboundpoint{#1O}{#1M2}{0}{circle}{#1O@outA}%
+  \mccmchainboundpoint{#1M2}{#1O}{0}{square}{#1M2@inA}%
+  \draw[mccmchainminimetabline, shorten <=0.4pt, draw=blue!60!black]
+    (#1M@out) -- (#1O@inA);%
+  \coordinate (#1@ShaftEnd) at ($(#1O@outA)!\mccmchainminiarrowshaftstop!(#1M2@inA)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=yellow!55!black]
+    (#1O@outA) -- (#1@ShaftEnd);%
+  \mccmchaindrawminimetab@splithead{#1O@outA}{#1@ShaftEnd}{#1M2@inA}{yellow!55!black}%
+  \node[mballMiniMone] at (#1M) {};%
+  \node[mballMiniMtwo] at (#1M2) {};%
+}
+\def\mccmchaindrawminimetabB#1#2#3#4#5{%
+  \node[orgcellMini] (#1O) at (#2,#3) {};%
+  \node[mballMiniMtwo] (#1M) at ($(#1O)+(-\mccmchainminimetabhspan,#4)$) {};%
+  \node[mballMiniWaste] (#1W) at ($(#1O)+(\mccmchainminimetabhspan,#5)$) {};%
+  \mccmchainboundpoint{#1M}{#1O}{0}{square}{#1M@out}%
+  \mccmchainboundpoint{#1O}{#1M}{0}{circle}{#1O@inB}%
+  \mccmchainboundpoint{#1O}{#1W}{0}{circle}{#1O@outB}%
+  \mccmchainboundpoint{#1W}{#1O}{0}{square}{#1W@inB}%
+  \draw[mccmchainminimetabline, shorten <=0.4pt, draw=yellow!55!black]
+    (#1M@out) -- (#1O@inB);%
+  \coordinate (#1@ShaftEnd) at ($(#1O@outB)!\mccmchainminiarrowshaftstop!(#1W@inB)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=gray!65!black]
+    (#1O@outB) -- (#1@ShaftEnd);%
+  \mccmchaindrawminimetab@splithead{#1O@outB}{#1@ShaftEnd}{#1W@inB}{gray!65!black}%
+  \node[mballMiniMtwo] at (#1M) {};%
+  \node[mballMiniWaste] at (#1W) {};%
+}
+% Generalist: both tasks pass through the organism (upper/lower lanes).
+\def\mccmchaindrawminimetabG#1#2#3{%
+  \node[orgcellMini] (#1O) at (#2,#3) {};%
+  \node[mballMiniMone] (#1M1) at ($(#1O)+(-0.26,0.08)$) {};%
+  \node[mballMiniMtwo] (#1M2) at ($(#1O)+(0.26,0.08)$) {};%
+  \node[mballMiniMtwo] (#1M2b) at ($(#1O)+(-0.26,-0.08)$) {};%
+  \node[mballMiniWaste] (#1W) at ($(#1O)+(0.26,-0.08)$) {};%
+  \mccmchainorglanecoords{#1O}{#1OinU}{#1OoutU}{0.0465}{0.48}%
+  \mccmchainorglanecoords{#1O}{#1OinL}{#1OoutL}{0.0465}{-0.48}%
+  \mccmchainboundpointtoc{#1M1}{#1OinU}{0}{square}{#1M1@out}%
+  \mccmchainboundpointtoc{#1M2}{#1OoutU}{0}{square}{#1M2@inU}%
+  \mccmchainboundpointtoc{#1M2b}{#1OinL}{0}{square}{#1M2b@out}%
+  \mccmchainboundpoint{#1W}{#1O}{0}{square}{#1W@inL}%
+  \draw[mccmchainminimetabline, shorten <=0.4pt, draw=blue!60!black]
+    (#1M1@out) -- (#1OinU) -- (#1OoutU) -- (#1M2@inU);%
+  \mccmchainminimetab@joint{#1OinU}{blue!60!black}%
+  \mccmchainminimetab@joint{#1OoutU}{yellow!55!black}%
+  \draw[mccmchainminimetabline, shorten <=0.4pt, draw=yellow!55!black]
+    (#1M2b@out) -- (#1OinL) -- (#1OoutL);%
+  \mccmchainminimetab@joint{#1OinL}{yellow!55!black}%
+  \coordinate (#1@ShaftEnd) at ($(#1OoutL)!\mccmchainminiarrowshaftstop!(#1W@inL)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=gray!65!black]
+    (#1OoutL) -- (#1@ShaftEnd);%
+  \mccmchaindrawminimetab@splithead{#1OoutL}{#1@ShaftEnd}{#1W@inL}{gray!65!black}%
+  \node[mballMiniMone] at (#1M1) {};%
+  \node[mballMiniMtwo] at (#1M2) {};%
+  \node[mballMiniMtwo] at (#1M2b) {};%
+  \node[mballMiniWaste] at (#1W) {};%
+}
+% Cross-feeding: producer $M_1$->$M_2$, consumer $M_2$->waste (shared intermediate).
+\def\mccmchaindrawminimetabXF#1#2#3{%
+  \node[mballMiniMone] (#1M1) at ($(#2,#3)+(-0.36,0.04)$) {};%
+  \node[orgcellMini] (#1O1) at ($(#2,#3)+(-0.12,0.00)$) {};%
+  \node[mballMiniMtwo] (#1M2) at ($(#2,#3)+(0.10,0.05)$) {};%
+  \node[orgcellMini] (#1O2) at ($(#2,#3)+(0.32,-0.02)$) {};%
+  \node[mballMiniWaste] (#1W) at ($(#2,#3)+(0.54,0.02)$) {};%
+  \mccmchainboundpoint{#1M1}{#1O1}{0}{square}{#1M1@out}%
+  \mccmchainboundpoint{#1O1}{#1M1}{0}{circle}{#1O1@in}%
+  \mccmchainboundpoint{#1O1}{#1M2}{0}{circle}{#1O1@out}%
+  \mccmchainboundpoint{#1M2}{#1O1}{0}{square}{#1M2@in}%
+  \mccmchainboundpoint{#1M2}{#1O2}{0}{square}{#1M2@out}%
+  \mccmchainboundpoint{#1O2}{#1M2}{0}{circle}{#1O2@in}%
+  \mccmchainboundpoint{#1O2}{#1W}{0}{circle}{#1O2@out}%
+  \mccmchainboundpoint{#1W}{#1O2}{0}{square}{#1W@in}%
+  \draw[mccmchainminimetabline, shorten <=0.4pt, draw=blue!60!black]
+    (#1M1@out) -- (#1O1@in);%
+  \draw[mccmchainminimetabline, draw=yellow!55!black]
+    (#1O1@out) -- (#1M2@in);%
+  \draw[mccmchainminimetabline, draw=yellow!55!black]
+    (#1M2@out) -- (#1O2@in);%
+  \coordinate (#1@ShaftEnd) at ($(#1O2@out)!\mccmchainminiarrowshaftstop!(#1W@in)$);%
+  \draw[mccmchainminimetabline, line cap=butt, draw=gray!65!black]
+    (#1O2@out) -- (#1@ShaftEnd);%
+  \mccmchaindrawminimetab@splithead{#1O2@out}{#1@ShaftEnd}{#1W@in}{gray!65!black}%
+  \node[mballMiniMone] at (#1M1) {};%
+  \node[mballMiniMtwo] at (#1M2) {};%
+  \node[mballMiniWaste] at (#1W) {};%
+}
+\def\mccmchaindrawminidup#1#2#3{%
+  \node[orgcellMini] (#1P) at (#2,#3) {};%
+  \node[orgcellMini, minimum size=2.15pt] (#1C1) at ($(#2,#3)+(0.20,0.10)$) {};%
+  \node[orgcellMini, minimum size=2.15pt] (#1C2) at ($(#2,#3)+(0.20,-0.10)$) {};%
+  \draw[->, line width=0.28pt, teal!55!black] (#1P.east) -- (#1C1.west);%
+  \draw[->, line width=0.28pt, teal!55!black] (#1P.east) -- (#1C2.west);%
+}
+\def\mccmchaindrawminidie#1#2#3{%
+  \node[orgcellMini] (#1) at (#2,#3) {};%
+  \draw[red!75!black, line width=0.45pt]
+    ($(#2,#3)+(-0.9pt,-0.9pt)$) -- ($(#2,#3)+(0.9pt,0.9pt)$);%
+  \draw[red!75!black, line width=0.45pt]
+    ($(#2,#3)+(-0.9pt,0.9pt)$) -- ($(#2,#3)+(0.9pt,-0.9pt)$);%
+}
+\def\mccmchaindrawminimut#1#2#3{%
+  \node[orgcellMini] (#1P) at (#2,#3) {};%
+  \node[orgcellMini, minimum size=2.15pt] (#1C1) at ($(#2,#3)+(0.20,0.10)$) {};%
+  \node[orgcellMiniMut, minimum size=2.15pt] (#1C2) at ($(#2,#3)+(0.20,-0.10)$) {};%
+  \draw[->, line width=0.28pt, teal!55!black] (#1P.east) -- (#1C1.west);%
+  \draw[->, line width=0.28pt, magenta!70!black, dashed] (#1P.east) -- (#1C2.west);%
+}
+\makeatother
+
+\begin{tikzpicture}[
+  font=\small,
+  >={Stealth[scale=\mccmchainthickarrowscale]},
+  box/.style={draw=#1!70!black, fill=#1!12, rounded corners=2pt,
+    minimum width=2.05cm, minimum height=0.88cm, text width=1.85cm, align=center},
+  task/.style={font=\footnotesize\bfseries, fill=white, inner sep=1pt, align=center},
+]
+
+% Shared horizontal layout for both panels.
+\def\mccmchainsep{2.35cm}
+\def\mccmchainy{-0.35cm}
+\def\mccmchainpanelpitch{1.62cm}  % vertical offset a -> b
+\def\mccmchainybot{0.44cm}  % half box height + inner sep
+% Panel (b) bottom (~-2.94) + gap before chemostat title.
+\def\mccmchainchemostatpitch{6.20cm}  % vertical offset a -> c
+\def\mccmchainlabelx{-1.08cm}       % panel letters; left of a/b box west edges
+\def\mccmchaincontentx{0.05cm}
+% (c) label aligned with chemostat title row, not the inflow pipe.
+\def\mccmchainchemostatlabely{2.62cm}
+\def\mccmchainlegendyone{-0.82cm}   % ~0.34 cm below tank bottom (-0.48)
+
+% Shared panel-letter column (same x for a, b, and c).
+\newcommand{\mccmchainpanellabel}[2]{%
+  \node[anchor=east, font=\bfseries] at (\mccmchainlabelx,#1) {(#2)};}
+
+% #1=y shift, #2=panel tag, #3--#5=box labels, #6--#7=task labels, #8=colored or black
+\newcommand{\mccmchainpanel}[8]{%
+  \begin{scope}[shift={(0,#1)}]
+    \begin{scope}[shift={(\mccmchaincontentx,0)}]
+      \node[box=blue] (left) at (0,\mccmchainy) {#3};
+      \node[box=orange, right=\mccmchainsep of left] (mid) {#4};
+      \node[box=gray, right=\mccmchainsep of mid] (right) {#5};
+      \def\mccmchainstyle{#8}%
+      \ifx\mccmchainstyle colored
+        \draw[->, thick, blue!70!black] (left.east) -- node[task, above=2pt] {#6\\{\scriptsize (+ Energy)}} (mid.west);
+        \draw[->, thick, orange!70!black] (mid.east) -- node[task, above=2pt] {#7\\{\scriptsize (+ Energy)}} (right.west);
+      \else
+        \draw[->, thick] (left.east) -- node[task, above=2pt] {#6\\{\scriptsize (+ Energy)}} (mid.west);
+        \draw[->, thick] (mid.east) -- node[task, above=2pt] {#7\\{\scriptsize (+ Energy)}} (right.west);
+      \fi
+    \end{scope}
+    \mccmchainpanellabel{\mccmchainy}{#2}
+  \end{scope}%
+}
+
+% #1=y shift, #2=panel tag
+\newcommand{\mccmchainchemostatpanel}[2]{%
+  \begin{scope}[shift={(0,#1)}]
+    \begin{scope}[shift={(\mccmchaincontentx,0)}]
+    \tikzset{
+      mccmchainstealth/.tip={Stealth[scale=\mccmchainmetabarrowscale]},
+      >={mccmchainstealth},
+      demolabel/.style={font=\scriptsize, fill=white, inner sep=1pt},
+      crossfeedbox/.style={draw=gray!60, dotted, line width=0.85pt,
+        rounded corners=4pt, inner sep=0.26cm, fill=none},
+    }
+    \tikzset{
+      mball/.style={rectangle, minimum size=3.85pt, inner sep=0pt}, % 70% of 5.5pt
+      mballMone/.style={mball, draw=blue!70!black, fill=blue!22},
+      mballMtwo/.style={mball, draw=yellow!55!black, fill=yellow!35},
+      mballShared/.style={mball, draw=yellow!55!black, fill=yellow!38, minimum size=4.9pt}, % 70% of 7pt
+      mballWaste/.style={mball, draw=gray!65!black, fill=gray!18},
+      orgcell/.style={circle, draw=teal!55!black, fill=teal!14, minimum size=8pt, inner sep=0pt},
+      orgcellMut/.style={circle, draw=none, fill=magenta!38, minimum size=7pt, inner sep=0pt,
+        append after command={\pgfextra{\mccmchaindrawmutborder{\tikzlastnode}}}},
+      mballMini/.style={rectangle, minimum size=1.3pt, inner sep=0pt}, % 70% of 1.85pt
+      mballMiniMone/.style={mballMini, draw=blue!70!black, fill=blue!22},
+      mballMiniMtwo/.style={mballMini, draw=yellow!55!black, fill=yellow!35},
+      mballMiniWaste/.style={mballMini, draw=gray!65!black, fill=gray!18},
+      orgcellMini/.style={circle, draw=teal!55!black, fill=teal!14,
+        minimum size=2.65pt, inner sep=0pt},
+      orgcellMiniMut/.style={circle, draw=none, fill=magenta!38,
+        minimum size=2.3pt, inner sep=0pt,
+        append after command={\pgfextra{\mccmchaindrawmutborder{\tikzlastnode}}}},
+    }
+    \def\mccmchainorgradius{0.141cm} % half of 8pt organism diameter
+    \def\mccmchainchildradius{0.115cm} % half of 6.5pt offspring diameter
+    \def\mccmchaintankbot{-0.48}
+    \def\mccmchaintanktop{2.85}
+    \def\mccmchainpipeh{0.105}
+    \def\mccmchainstub{0.28}
+    \def\mccmchainrimd{0.09}
+    \def\mccmchainrimflare{0.055}
+    \pgfmathsetmacro{\mccmchainpipey}{0.5*(\mccmchaintankbot+\mccmchaintanktop)}
+    \pgfmathsetmacro{\mccmchainbarrelbot}{\mccmchainpipey-\mccmchainpipeh}
+    \pgfmathsetmacro{\mccmchainbarreltop}{\mccmchainpipey+\mccmchainpipeh}
+    \pgfmathsetmacro{\mccmchainrimbot}{\mccmchainbarrelbot-\mccmchainrimflare}
+    \pgfmathsetmacro{\mccmchainrimtop}{\mccmchainbarreltop+\mccmchainrimflare}
+    \pgfmathsetmacro{\mccmchainbarrelL}{0.75-\mccmchainstub}
+    \pgfmathsetmacro{\mccmchainrimL}{\mccmchainbarrelL-\mccmchainrimd}
+    \pgfmathsetmacro{\mccmchainbarrelR}{8.45+\mccmchainstub}
+    \pgfmathsetmacro{\mccmchainrimR}{8.45+\mccmchainstub+\mccmchainrimd}
+    \coordinate (tankSW) at (0.75,\mccmchaintankbot);
+    \coordinate (tankNE) at (8.45,\mccmchaintanktop);
+    \coordinate (inletOuterMid) at (\mccmchainrimL,\mccmchainpipey);
+    \coordinate (outletOuterMid) at (\mccmchainrimR,\mccmchainpipey);
+    \def\mccmchaintankr{0.14}
+
+    % Chemostat + stubby nozzles with squared rim lips; tank corners arced, nozzle joints square.
+    \path[fill=gray!5, draw=gray!55, line width=0.9pt]
+      (\mccmchainrimL,\mccmchainrimbot) -- (\mccmchainrimL,\mccmchainrimtop)
+      -- (\mccmchainbarrelL,\mccmchainrimtop) -- (\mccmchainbarrelL,\mccmchainbarreltop)
+      -- (0.75,\mccmchainbarreltop)
+      -- (0.75,{\mccmchaintanktop-\mccmchaintankr})
+      arc (180:90:\mccmchaintankr)
+      -- (8.45-\mccmchaintankr,\mccmchaintanktop)
+      arc (90:0:\mccmchaintankr)
+      -- (8.45,\mccmchainbarreltop)
+      -- (\mccmchainbarrelR,\mccmchainbarreltop) -- (\mccmchainbarrelR,\mccmchainrimtop)
+      -- (\mccmchainrimR,\mccmchainrimtop) -- (\mccmchainrimR,\mccmchainrimbot)
+      -- (\mccmchainbarrelR,\mccmchainrimbot) -- (\mccmchainbarrelR,\mccmchainbarrelbot)
+      -- (8.45,\mccmchainbarrelbot)
+      -- (8.45,{\mccmchaintankbot+\mccmchaintankr})
+      arc (0:-90:\mccmchaintankr)
+      -- (8.45-\mccmchaintankr,\mccmchaintankbot)
+      -- (0.75+\mccmchaintankr,\mccmchaintankbot)
+      arc (-90:-180:\mccmchaintankr)
+      -- (0.75,{\mccmchaintankbot+\mccmchaintankr})
+      -- (0.75,\mccmchainbarrelbot)
+      -- (\mccmchainbarrelL,\mccmchainbarrelbot) -- (\mccmchainbarrelL,\mccmchainrimbot)
+      -- cycle;
+    \colorlet{mccmchainmetabbg}{gray!5}
+    \colorlet{mccmchainminimetabbg}{gray!5}
+    \node[font=\scriptsize, anchor=south] at (4.6,2.78) {Well-Mixed Chemostat};
+
+    % Background scatter: only in visual negative space (never overlap featured motifs).
+    % Interior margin from walls: ~0.12 cm (x in [1.05, 8.12], y in [0.62, 2.45]).
+    % Exclusion zones (approx.):
+    %   feed C        x in [0.90, 2.70],  y in [0.72, 1.32]
+    %   cross-feeding x in [2.70, 6.90],  y in [1.02, 2.15]  (+ label)
+    %   feed A        x in [1.15, 3.15],  y in [2.00, 2.55]
+    %   feed B        x in [6.85, 8.30],  y in [2.00, 2.55]
+    %   demographics  y in [0.00, 0.58]  (dup / death / mutation row)
+    \def\mccmchainbgopacity{0.20}
+    \begin{scope}[opacity=\mccmchainbgopacity]
+    \makeatletter
+    % Left margin column (right of feed C, left of cross-feeding).
+    \mccmchaindrawminimetabA{bgAone}{1.40}{1.50}{0.05}{-0.04}
+    \mccmchaindrawminimetabB{bgBone}{1.40}{1.78}{0.04}{-0.03}
+    \mccmchaindrawminimetabG{bgGtwo}{2.08}{1.78}
+    % Right margin column (right of cross-feeding, left of feed B).
+    \mccmchaindrawminimetabA{bgAthr}{7.52}{1.50}{-0.04}{0.03}
+    \mccmchaindrawminimetabB{bgBtwo}{7.52}{1.78}{-0.03}{0.04}
+    % Top band (above cross-feeding label, between feed A and feed B).
+    \mccmchaindrawminimetabA{bgAtwo}{3.50}{2.32}{0.05}{-0.04}
+    \mccmchaindrawminimetabG{bgGone}{6.22}{2.32}
+    % Lower band (between featured demographic exemplars).
+    \mccmchaindrawminidup{bgDupA}{3.35}{0.72}
+    \mccmchaindrawminidie{bgDieA}{5.95}{0.72}
+    \mccmchaindrawminimut{bgMutA}{7.18}{0.72}
+    % Loose metabolites (well-mixed background; no attached metabolism).
+    \node[mballMiniMone] at (1.12, 2.38) {};
+    \node[mballMiniMtwo] at (1.38, 2.38) {};
+    \node[mballMiniMone] at (4.85, 2.40) {};
+    \node[mballMiniWaste] at (5.55, 2.40) {};
+    \node[mballMiniMtwo] at (7.95, 1.95) {};
+    \node[mballMiniWaste] at (7.28, 1.12) {};
+    \node[mballMiniMone] at (1.35, 0.68) {};
+    \node[mballMiniMtwo] at (2.72, 0.68) {};
+    \node[mballMiniWaste] at (4.40, 0.68) {};
+    \node[mballMiniMone] at (6.75, 0.68) {};
+    \makeatother
+    \end{scope}
+
+    % Interior layout bands (keep clear of title, pipes, walls, and legend).
+    \def\mccmchainxfy{1.55}
+    \def\mccmchainfeedAy{2.35}
+    \def\mccmchainfeedBy{2.35}
+    \def\mccmchainfeedCy{1.08}
+
+    % Cross-feeding pair (featured motif): shared $M_2$ between two specialists.
+    \node[mballMone] (xfMoneNode) at (3.42,1.62) {};
+    \node[orgcell] (orgProducer) at (4.145,1.48) {};
+    \node[mballShared] (sharedMtwo) at (4.87,1.58) {};
+    \node[orgcell] (orgConsumer) at (5.575,1.46) {};
+    \node[mballWaste] (xfWasteNode) at (6.28,1.60) {};
+    \node[crossfeedbox, fit=(xfMoneNode)(orgProducer)(sharedMtwo)(orgConsumer)(xfWasteNode),
+      inner sep=0.22cm,
+      label={[demolabel, anchor=south]above:Cross-feeding}] (xfFitBox) {};
+
+    % Additional feeding organisms (left metabolite -> organism -> right metabolite).
+    \node[mballMone] (feedAM1Node) at (1.50,2.42) {};
+    \node[orgcell] (feedAOrgNode) at (2.21,2.28) {};
+    \node[mballMtwo] (feedAM2Node) at (2.92,2.38) {};
+
+    \node[mballMtwo] (feedBM2Node) at (7.02,2.28) {};
+    \node[orgcell] (feedBOrgNode) at (7.585,2.42) {};
+    \node[mballWaste] (feedBWasteNode) at (8.15,2.32) {};
+
+    % Generalist organism: two separate left-to-right tasks (upper/lower lanes).
+    \node[orgcell] (feedCOrgNode) at (1.78,1.04) {};
+    \node[mballMone] (feedCM1Node) at (1.05,1.18) {};
+    \node[mballMtwo] (feedCM2OutNode) at (2.45,1.18) {};
+    \node[mballMtwo] (feedCM2InNode) at (1.05,0.90) {};
+    \node[mballWaste] (feedCWasteNode) at (2.45,0.90) {};
+
+    % Metabolism arrows (drawn after all nodes so they pass over organisms).
+    \makeatletter
+    \mccmchaindrawmetabarrowExt{metabxfprod}{xfMoneNode}{orgProducer}{sharedMtwo}{blue!65!black}{yellow!55!black}{\mccmchainmballradius}{\mccmchainmballsharedradius}
+    \mccmchaindrawmetabarrowExt{metabxfcons}{sharedMtwo}{orgConsumer}{xfWasteNode}{yellow!55!black}{gray!65!black}{\mccmchainmballsharedradius}{\mccmchainmballradius}
+    \mccmchaindrawmetabarrow{metabfeedA}{feedAM1Node}{feedAOrgNode}{feedAM2Node}{blue!65!black}{yellow!55!black}
+    \mccmchaindrawmetabarrow{metabfeedB}{feedBM2Node}{feedBOrgNode}{feedBWasteNode}{yellow!55!black}{gray!65!black}
+    \mccmchaindrawmetabarrowLane{metabfeedCa}{feedCM1Node}{feedCOrgNode}{feedCM2OutNode}{blue!65!black}{yellow!55!black}{u}
+    \mccmchaindrawmetabarrowLane{metabfeedCb}{feedCM2InNode}{feedCOrgNode}{feedCWasteNode}{yellow!55!black}{gray!65!black}{l}
+    % Metabolite squares above arrow ports (organisms stay beneath the through-lanes).
+    \mccmchainrestackmet{xfMoneNode}{mballMone}
+    \mccmchainrestackmet{sharedMtwo}{mballShared}
+    \mccmchainrestackmet{xfWasteNode}{mballWaste}
+    \mccmchainrestackmet{feedAM1Node}{mballMone}
+    \mccmchainrestackmet{feedAM2Node}{mballMtwo}
+    \mccmchainrestackmet{feedBM2Node}{mballMtwo}
+    \mccmchainrestackmet{feedBWasteNode}{mballWaste}
+    \mccmchainrestackmet{feedCM1Node}{mballMone}
+    \mccmchainrestackmet{feedCM2OutNode}{mballMtwo}
+    \mccmchainrestackmet{feedCM2InNode}{mballMtwo}
+    \mccmchainrestackmet{feedCWasteNode}{mballWaste}
+    \makeatother
+
+    % Lower interior: demographic exemplars (duplication, death, mutation).
+    % Death sits on chemostat center; dup/mut visual centers are equally spaced.
+    \def\mccmchaindemocenterx{4.60}
+    \def\mccmchaindemohalfspan{2.75}
+    \def\mccmchaindemodupoff{0.345}  % dup fit center = parent x + this
+    \def\mccmchaindemomutoff{0.315}  % mut fit center = parent x + this
+    \pgfmathsetmacro{\mccmchaindemodupx}{\mccmchaindemocenterx-\mccmchaindemohalfspan-\mccmchaindemodupoff}
+    \pgfmathsetmacro{\mccmchaindemodiex}{\mccmchaindemocenterx}
+    \pgfmathsetmacro{\mccmchaindemomutx}{\mccmchaindemocenterx+\mccmchaindemohalfspan-\mccmchaindemomutoff}
+    \def\mccmchaindemocy{0.16}
+    \def\mccmchaindemochx{0.63}
+    \def\mccmchaindemolabely{0.02}
+    \def\mccmchaindemoy{0.38}
+    \node[orgcell] (dupP) at (\mccmchaindemodupx,\mccmchaindemoy) {};
+    \node[orgcell, minimum size=6.5pt] (dupC1) at ({\mccmchaindemodupx+\mccmchaindemochx}, {\mccmchaindemoy+\mccmchaindemocy}) {};
+    \node[orgcell, minimum size=6.5pt] (dupC2) at ({\mccmchaindemodupx+\mccmchaindemochx+0.06}, {\mccmchaindemoy-\mccmchaindemocy}) {};
+    \makeatletter
+    \mccmchaindraworgsplit{dupP}{dupC1}{teal!55!black}
+    \mccmchaindraworgsplit{dupP}{dupC2}{teal!55!black}
+    \makeatother
+    \node[inner sep=0.10cm, fit=(dupP)(dupC1)(dupC2)] (dupDemoFit) {};
+
+    \node[orgcell, opacity=0.4] (dieO) at (\mccmchaindemodiex,\mccmchaindemoy) {};
+    \draw[red!75!black, line width=0.85pt] ($(dieO.center)+(-2.8pt,-2.8pt)$) -- ($(dieO.center)+(2.8pt,2.8pt)$);
+    \draw[red!75!black, line width=0.85pt] ($(dieO.center)+(-2.8pt,2.8pt)$) -- ($(dieO.center)+(2.8pt,-2.8pt)$);
+
+    \node[orgcell] (mutP) at (\mccmchaindemomutx,\mccmchaindemoy) {};
+    \node[orgcell, minimum size=6.5pt] (mutC1) at ({\mccmchaindemomutx+\mccmchaindemochx}, {\mccmchaindemoy+\mccmchaindemocy}) {};
+    \node[orgcellMut, minimum size=6.5pt] (mutC2) at ({\mccmchaindemomutx+\mccmchaindemochx}, {\mccmchaindemoy-\mccmchaindemocy}) {};
+    \makeatletter
+    \mccmchaindraworgsplit{mutP}{mutC1}{teal!55!black}
+    \mccmchaindraworgsplit{mutP}{mutC2}{magenta!70!black, dashed}
+    \makeatother
+    \node[inner sep=0.10cm, fit=(mutP)(mutC1)(mutC2)] (mutDemoFit) {};
+
+    \node[demolabel, anchor=north] at (dupDemoFit.south |- 0,\mccmchaindemolabely) {Duplication};
+    \node[demolabel, anchor=north] at (dieO.south |- 0,\mccmchaindemolabely) {Death};
+    \node[demolabel, anchor=north] at (mutDemoFit.south |- 0,\mccmchaindemolabely) {Mutation};
+
+    % Inflow: arrow terminates at the outer face of the intake nozzle.
+    \def\mccmchaininflowMoneoffset{0.21}
+    \node[mballMone] at (-0.46, {\mccmchainpipey+\mccmchaininflowMoneoffset}) {};
+    \node[mballMone] at (-0.46, {\mccmchainpipey-\mccmchaininflowMoneoffset}) {};
+    \draw[->, thick, blue!65!black, shorten >=\mccmchainpipesarrowshorten] (-0.62,\mccmchainpipey) -- (inletOuterMid);
+    \node[font=\scriptsize, blue!70!black, anchor=north] at (-0.46, {\mccmchainpipey-0.46}) {Inflow $M_1$};
+
+    % Outflow: arrow starts at the outer face of the outlet nozzle.
+    \draw[->, thick, gray!65!black, shorten <=\mccmchainpipesarrowshorten] (outletOuterMid) -- (9.35,\mccmchainpipey);
+    \node[orgcell] at (9.48, {\mccmchainpipey+0.22}) {};
+    \node[orgcell] at (9.48, {\mccmchainpipey-0.22}) {};
+    \node[mballMone] at (9.78, {\mccmchainpipey+0.26}) {};
+    \node[mballMtwo] at (9.78, \mccmchainpipey) {};
+    \node[mballWaste] at (9.78, {\mccmchainpipey-0.26}) {};
+    \node[font=\scriptsize, gray!65!black, anchor=north] at (9.50, {\mccmchainpipey-0.50}) {Outflow $(\phi)$};
+
+    % Legend below the chemostat vessel (centered on tank body at x=4.60).
+    \def\mccmchainchemostatcenterx{4.60}
+    \node[anchor=center, inner sep=0pt] at (\mccmchainchemostatcenterx,\mccmchainlegendyone) {%
+      \begin{tikzpicture}[baseline=(legMone.center)]
+        \node[mballMone, anchor=west] (legMone) at (0,0) {};
+        \node[font=\scriptsize, anchor=west] (legMoneLbl) at ([xshift=2pt]legMone.east) {$M_1$};
+        \node[mballMtwo, anchor=west] (legMtwo) at ([xshift=0.40cm]legMoneLbl.east) {};
+        \node[font=\scriptsize, anchor=west] (legMtwoLbl) at ([xshift=2pt]legMtwo.east) {$M_2$};
+        \node[mballWaste, anchor=west] (legWaste) at ([xshift=0.40cm]legMtwoLbl.east) {};
+        \node[font=\scriptsize, anchor=west] (legWasteLbl) at ([xshift=2pt]legWaste.east) {Waste};
+        \node[orgcell, anchor=west] (legOrg) at ([xshift=0.40cm]legWasteLbl.east) {};
+        \node[font=\scriptsize, anchor=west] (legOrgLbl) at ([xshift=2pt]legOrg.east) {Organism};
+        \node[orgcellMut, anchor=west] (legMut) at ([xshift=0.40cm]legOrgLbl.east) {};
+        \node[font=\scriptsize, anchor=west] (legMutLbl) at ([xshift=2pt]legMut.east) {Mutant Offspring};
+      \end{tikzpicture}};
+    \end{scope}
+    \mccmchainpanellabel{\mccmchainchemostatlabely}{#2}
+  \end{scope}%
+}
+
+% --- (a) Abstract two-task chain ---
+\mccmchainpanel{0}{a}{Metabolite\\1 ($M_1$)}{Metabolite\\2 ($M_2$)}{Waste}{Task A}{Task B}{colored}
+
+% --- (b) E. coli instance ---
+\mccmchainpanel{-\mccmchainpanelpitch}{b}{Glucose}{Acetate}{CO\textsubscript{2}}{Glycolysis}{TCA Cycle}{black}
+
+% --- (c) Well-mixed chemostat schematic ---
+\mccmchainchemostatpanel{-\mccmchainchemostatpitch}{c}
+
+% Tight export box: margins on ink (standalone + pdfcrop).
+\def\mccmchainbboxleft{-1.35cm}
+\def\mccmchainbboxright{10.50cm}  % outflow pipe, large arrowheads, and label
+\def\mccmchainbboxtop{0.68cm}
+\def\mccmchainbboxbot{-8.15cm}
+\pgfresetboundingbox
+\useasboundingbox
+  (\mccmchainbboxleft, \mccmchainbboxbot)
+  rectangle (\mccmchainbboxright, \mccmchainbboxtop);
+
+\end{tikzpicture}

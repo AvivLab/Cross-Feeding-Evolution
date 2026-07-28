@@ -3,7 +3,7 @@
   <h1 style="margin:0 0 10px;border:none;">Cross-Feeding Evolution</h1>
 </div>
 
-Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Chemostat Cross-feeding Problem). This download includes four desktop apps for interactive runs, parameter search, and batch campaigns, plus optional command-line tools for batch runs and re-screening.
+Simulate microbial evolution in a chemostat using the **MCCM** model (Minimal Cross-feeding Chemostat Model). This download includes four desktop apps for interactive runs, parameter search, and batch campaigns, plus optional command-line tools for batch runs and re-screening.
 
 ## Contents
 
@@ -23,7 +23,7 @@ Simulate microbial evolution in a chemostat using the **MCCP** model (Minimal Ch
 
 ## About
 
-- **Version:** 1.0.2
+- **Version:** 1.1.0
 - **Last updated:** 2026-07-28
 
 This software was developed in the **Bergman Lab** at the **Department of Systems and Computational Biology**, Albert Einstein College of Medicine, Bronx, NY 10461, USA.

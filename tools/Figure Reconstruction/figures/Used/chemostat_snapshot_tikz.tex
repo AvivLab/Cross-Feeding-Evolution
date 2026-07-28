@@ -6,7 +6,7 @@
 % (lower right, $M_2$ outflows). Six $M_1$ units inflow: four consumed in Task~A;
 % one unused bottom-left persists; one unused top-right outflows.
 \makeatletter
-\input{mccp_chain_metab_arrows.tex}
+\input{mccm_chain_metab_arrows.tex}
 
 \def\ChemostatSnapNativeXMin{-0.88}
 \def\ChemostatSnapNativeXMax{9.98}
@@ -171,7 +171,7 @@
   \pgfpointanchor{#1}{center}\pgf@ya=\pgf@y
   \pgfmathsetmacro{\csoutflownodecy}{\pgf@ya/1cm}%
   \makeatother
-  \pgfmathsetmacro{\csoutflownodeabove}{int(\csoutflownodecy>\mccpchainpipey)}%
+  \pgfmathsetmacro{\csoutflownodeabove}{int(\csoutflownodecy>\mccmchainpipey)}%
   \makeatletter
   \ifnum\csoutflownodeabove=1
     \pgfpointanchor{#1}{south}\pgf@xa=\pgf@x
@@ -190,12 +190,12 @@
     % Left end at leftmost branch junction (teex+bend; noted in \ChemostatSnapOutflowBranch).
     \pgfmathsetmacro{\csoutflowtrunkxwdraw}{min(\csoutflowmergex,\ChemostatSnapOutflowTrunkXw)}%
     \draw[csoutflowline, gray!65!black, line cap=butt]
-      (\csoutflowtrunkxwdraw,\mccpchainpipey)
-      -- (\csoutflowmergex,\mccpchainpipey);%
+      (\csoutflowtrunkxwdraw,\mccmchainpipey)
+      -- (\csoutflowmergex,\mccmchainpipey);%
     \ChemostatSnapTrunkFlowArrows{\csoutflowtrunkxwdraw}{\csoutflowmergex}{gray!65!black}%
   \fi
   \draw[cspipe, gray!65!black, shorten >=\ChemostatSnapRefPipeShorten]
-    (\csoutflowmergex,\mccpchainpipey) -- (csOutlet);%
+    (\csoutflowmergex,\mccmchainpipey) -- (csOutlet);%
 }
 
 \newcommand{\ChemostatSnapInflowStackY}[2]{%
@@ -212,7 +212,7 @@
   \pgfmathsetmacro{\csinitstackindex}{#1}%
   \pgfmathsetmacro{\csinitstackstep}{0.60}%
   \pgfmathsetmacro{\csinitstackcenter}{2}%
-  \pgfmathsetmacro{\csinflowstacky}{\mccpchainpipey + (\csinitstackcenter-\csinitstackindex)*\csinitstackstep}%
+  \pgfmathsetmacro{\csinflowstacky}{\mccmchainpipey + (\csinitstackcenter-\csinitstackindex)*\csinitstackstep}%
 }
 
 % $M_2$ shared between cross-feeding specialists PopA and PopB (upper row).
@@ -322,62 +322,62 @@
   \endgroup
 }
 
-\newcommand{\ChemostatSnapRestackMone}[1]{\mccpchainrestackmet{#1}{csmballMone}}
-\newcommand{\ChemostatSnapRestackMtwo}[1]{\mccpchainrestackmet{#1}{csmballMtwo}}
-\newcommand{\ChemostatSnapRestackWaste}[1]{\mccpchainrestackmet{#1}{csmballWaste}}
-\newcommand{\ChemostatSnapRestackShared}[1]{\mccpchainrestackmet{#1}{csmballShared}}
+\newcommand{\ChemostatSnapRestackMone}[1]{\mccmchainrestackmet{#1}{csmballMone}}
+\newcommand{\ChemostatSnapRestackMtwo}[1]{\mccmchainrestackmet{#1}{csmballMtwo}}
+\newcommand{\ChemostatSnapRestackWaste}[1]{\mccmchainrestackmet{#1}{csmballWaste}}
+\newcommand{\ChemostatSnapRestackShared}[1]{\mccmchainrestackmet{#1}{csmballShared}}
 % Gradient metabolism arrow through organism center (steps 2--4).
 \newcommand{\ChemostatSnapMetabThroughOrg}[6]{%
-  \mccpchaindrawmetabarrow{#1}{#2}{#3}{#4}{#5}{#6}%
+  \mccmchaindrawmetabarrow{#1}{#2}{#3}{#4}{#5}{#6}%
 }
 % Task~A when $M_2$ pool is not collinear with $M_1$ (center exits toward sink).
 \newcommand{\ChemostatSnapMetabThroughOrgCtrSink}[6]{%
-  \mccpchaindrawmetabarrowCtrSink{#1}{#2}{#3}{#4}{#5}{#6}%
+  \mccmchaindrawmetabarrowCtrSink{#1}{#2}{#3}{#4}{#5}{#6}%
 }
 % Curved lane above/below organism (step~5 energy panel; optional motifs).
 \newcommand{\ChemostatSnapMetabLane}[6]{%
-  \mccpchaindrawmetabarrowLane{#1}{#2}{#3}{#4}{#5}{#6}{u}%
+  \mccmchaindrawmetabarrowLane{#1}{#2}{#3}{#4}{#5}{#6}{u}%
 }
 
 \newcommand{\ChemostatSnapTank}{%
-  \def\mccpchaintankbot{-0.48}%
-  \def\mccpchaintanktop{2.85}%
-  \def\mccpchainpipeh{0.105}%
-  \def\mccpchainstub{0.28}%
-  \def\mccpchainrimd{0.09}%
-  \def\mccpchainrimflare{0.055}%
-  \def\mccpchaintankr{0.14}%
-  \pgfmathsetmacro{\mccpchainpipey}{0.5*(\mccpchaintankbot+\mccpchaintanktop)}%
-  \pgfmathsetmacro{\mccpchainbarrelbot}{\mccpchainpipey-\mccpchainpipeh}%
-  \pgfmathsetmacro{\mccpchainbarreltop}{\mccpchainpipey+\mccpchainpipeh}%
-  \pgfmathsetmacro{\mccpchainrimbot}{\mccpchainbarrelbot-\mccpchainrimflare}%
-  \pgfmathsetmacro{\mccpchainrimtop}{\mccpchainbarreltop+\mccpchainrimflare}%
-  \pgfmathsetmacro{\mccpchainbarrelL}{0.75-\mccpchainstub}%
-  \pgfmathsetmacro{\mccpchainrimL}{\mccpchainbarrelL-\mccpchainrimd}%
-  \pgfmathsetmacro{\mccpchainbarrelR}{8.45+\mccpchainstub}%
-  \pgfmathsetmacro{\mccpchainrimR}{8.45+\mccpchainstub+\mccpchainrimd}%
-  \coordinate (csInlet) at (\mccpchainrimL,\mccpchainpipey);%
-  \coordinate (csOutlet) at (\mccpchainrimR,\mccpchainpipey);%
+  \def\mccmchaintankbot{-0.48}%
+  \def\mccmchaintanktop{2.85}%
+  \def\mccmchainpipeh{0.105}%
+  \def\mccmchainstub{0.28}%
+  \def\mccmchainrimd{0.09}%
+  \def\mccmchainrimflare{0.055}%
+  \def\mccmchaintankr{0.14}%
+  \pgfmathsetmacro{\mccmchainpipey}{0.5*(\mccmchaintankbot+\mccmchaintanktop)}%
+  \pgfmathsetmacro{\mccmchainbarrelbot}{\mccmchainpipey-\mccmchainpipeh}%
+  \pgfmathsetmacro{\mccmchainbarreltop}{\mccmchainpipey+\mccmchainpipeh}%
+  \pgfmathsetmacro{\mccmchainrimbot}{\mccmchainbarrelbot-\mccmchainrimflare}%
+  \pgfmathsetmacro{\mccmchainrimtop}{\mccmchainbarreltop+\mccmchainrimflare}%
+  \pgfmathsetmacro{\mccmchainbarrelL}{0.75-\mccmchainstub}%
+  \pgfmathsetmacro{\mccmchainrimL}{\mccmchainbarrelL-\mccmchainrimd}%
+  \pgfmathsetmacro{\mccmchainbarrelR}{8.45+\mccmchainstub}%
+  \pgfmathsetmacro{\mccmchainrimR}{8.45+\mccmchainstub+\mccmchainrimd}%
+  \coordinate (csInlet) at (\mccmchainrimL,\mccmchainpipey);%
+  \coordinate (csOutlet) at (\mccmchainrimR,\mccmchainpipey);%
   \path[fill=gray!5, draw=gray!55, line width=\ChemostatSnapRefTankLW]
-    (\mccpchainrimL,\mccpchainrimbot) -- (\mccpchainrimL,\mccpchainrimtop)
-    -- (\mccpchainbarrelL,\mccpchainrimtop) -- (\mccpchainbarrelL,\mccpchainbarreltop)
-    -- (0.75,\mccpchainbarreltop)
-    -- (0.75,{\mccpchaintanktop-\mccpchaintankr})
-    arc (180:90:\mccpchaintankr)
-    -- (8.45-\mccpchaintankr,\mccpchaintanktop)
-    arc (90:0:\mccpchaintankr)
-    -- (8.45,\mccpchainbarreltop)
-    -- (\mccpchainbarrelR,\mccpchainbarreltop) -- (\mccpchainbarrelR,\mccpchainrimtop)
-    -- (\mccpchainrimR,\mccpchainrimtop) -- (\mccpchainrimR,\mccpchainrimbot)
-    -- (\mccpchainbarrelR,\mccpchainrimbot) -- (\mccpchainbarrelR,\mccpchainbarrelbot)
-    -- (8.45,\mccpchainbarrelbot)
-    -- (8.45,{\mccpchaintankbot+\mccpchaintankr})
-    arc (0:-90:\mccpchaintankr)
-    -- (0.75+\mccpchaintankr,\mccpchaintankbot)
-    arc (-90:-180:\mccpchaintankr)
-    -- (0.75,{\mccpchaintankbot+\mccpchaintankr})
-    -- (0.75,\mccpchainbarrelbot)
-    -- (\mccpchainbarrelL,\mccpchainbarrelbot) -- (\mccpchainbarrelL,\mccpchainrimbot)
+    (\mccmchainrimL,\mccmchainrimbot) -- (\mccmchainrimL,\mccmchainrimtop)
+    -- (\mccmchainbarrelL,\mccmchainrimtop) -- (\mccmchainbarrelL,\mccmchainbarreltop)
+    -- (0.75,\mccmchainbarreltop)
+    -- (0.75,{\mccmchaintanktop-\mccmchaintankr})
+    arc (180:90:\mccmchaintankr)
+    -- (8.45-\mccmchaintankr,\mccmchaintanktop)
+    arc (90:0:\mccmchaintankr)
+    -- (8.45,\mccmchainbarreltop)
+    -- (\mccmchainbarrelR,\mccmchainbarreltop) -- (\mccmchainbarrelR,\mccmchainrimtop)
+    -- (\mccmchainrimR,\mccmchainrimtop) -- (\mccmchainrimR,\mccmchainrimbot)
+    -- (\mccmchainbarrelR,\mccmchainrimbot) -- (\mccmchainbarrelR,\mccmchainbarrelbot)
+    -- (8.45,\mccmchainbarrelbot)
+    -- (8.45,{\mccmchaintankbot+\mccmchaintankr})
+    arc (0:-90:\mccmchaintankr)
+    -- (0.75+\mccmchaintankr,\mccmchaintankbot)
+    arc (-90:-180:\mccmchaintankr)
+    -- (0.75,{\mccmchaintankbot+\mccmchaintankr})
+    -- (0.75,\mccmchainbarrelbot)
+    -- (\mccmchainbarrelL,\mccmchainbarrelbot) -- (\mccmchainbarrelL,\mccmchainrimbot)
     -- cycle;%
 }
 
@@ -437,18 +437,18 @@
     \ifdim\csarrowtip pt>\dimexpr#2 pt\relax
       \pgfmathsetmacro{\csarrowlen}{max(0.04, #2 - \csarrowx)}%
       \draw[-{Stealth[scale=\ChemostatSnapTrunkFlowArrowScale]}, #3, line width=\ChemostatSnapRefMetabLW]
-        (\csarrowx,\mccpchainpipey) -- ++(\csarrowlen,0);%
+        (\csarrowx,\mccmchainpipey) -- ++(\csarrowlen,0);%
     \else
       \draw[-{Stealth[scale=\ChemostatSnapTrunkFlowArrowScale]}, #3, line width=\ChemostatSnapRefMetabLW]
-        (\csarrowx,\mccpchainpipey) -- ++(0.20,0);%
+        (\csarrowx,\mccmchainpipey) -- ++(0.20,0);%
     \fi
   }%
 }
 
 \newcommand{\ChemostatSnapIntakeTrunkDraw}[4]{%
   \draw[#1, line cap=butt]
-    (#2,\mccpchainpipey)
-    -- (#3,\mccpchainpipey);%
+    (#2,\mccmchainpipey)
+    -- (#3,\mccmchainpipey);%
   \ChemostatSnapTrunkFlowArrows{#2}{#3}{#4}%
 }
 
@@ -458,13 +458,13 @@
   \pgfmathsetmacro{\csinitmergecxtwo}{\csinitmergex-\ChemostatSnapInitMergeCpTrunk}%
   \draw[#1, shorten <=\ChemostatSnapRefMetabShorten]
     (#2.east)
-    .. controls (\csinitmergecxone,#3) and (\csinitmergecxtwo,\mccpchainpipey) ..
-    (\csinitmergex,\mccpchainpipey);%
+    .. controls (\csinitmergecxone,#3) and (\csinitmergecxtwo,\mccmchainpipey) ..
+    (\csinitmergex,\mccmchainpipey);%
 }
 
 \newcommand{\ChemostatSnapInitBranch}[5]{%
   \pgfmathsetmacro{\csinflowpooly}{#4}%
-  \pgfmathsetmacro{\csinflowabove}{int(\csinflowpooly>\mccpchainpipey)}%
+  \pgfmathsetmacro{\csinflowabove}{int(\csinflowpooly>\mccmchainpipey)}%
   \makeatletter
   \ifnum\csinflowabove=1
     \pgfpointanchor{#2}{south}\pgf@xa=\pgf@x \pgf@ya=\pgf@y
@@ -482,18 +482,18 @@
     \draw[#1, shorten <=\ChemostatSnapRefMetabShorten]
       (#2.south)
       -- (\csinflowedgex,\csinflowedgey)
-      -- (\csinflowedgex,\mccpchainpipey+\ChemostatSnapInitBranchBend)
-      .. controls (\csinflowedgex,\mccpchainpipey)
-                  and (\csinitjunction,\mccpchainpipey) ..
-      (\csinitjunction,\mccpchainpipey);%
+      -- (\csinflowedgex,\mccmchainpipey+\ChemostatSnapInitBranchBend)
+      .. controls (\csinflowedgex,\mccmchainpipey)
+                  and (\csinitjunction,\mccmchainpipey) ..
+      (\csinitjunction,\mccmchainpipey);%
   \else
     \draw[#1, shorten <=\ChemostatSnapRefMetabShorten]
       (#2.north)
       -- (\csinflowedgex,\csinflowedgey)
-      -- (\csinflowedgex,\mccpchainpipey-\ChemostatSnapInitBranchBend)
-      .. controls (\csinflowedgex,\mccpchainpipey)
-                  and (\csinitjunction,\mccpchainpipey) ..
-      (\csinitjunction,\mccpchainpipey);%
+      -- (\csinflowedgex,\mccmchainpipey-\ChemostatSnapInitBranchBend)
+      .. controls (\csinflowedgex,\mccmchainpipey)
+                  and (\csinitjunction,\mccmchainpipey) ..
+      (\csinitjunction,\mccmchainpipey);%
   \fi
 }
 
@@ -503,13 +503,13 @@
   \pgfmathsetmacro{\csinflowmergecxtwo}{\csinflowmergex-\ChemostatSnapInflowMergeCpTrunk}%
   \draw[#1, shorten <=\ChemostatSnapRefMetabShorten]
     (#2.east)
-    .. controls (\csinflowmergecxone,#3) and (\csinflowmergecxtwo,\mccpchainpipey) ..
-    (\csinflowmergex,\mccpchainpipey);%
+    .. controls (\csinflowmergecxone,#3) and (\csinflowmergecxtwo,\mccmchainpipey) ..
+    (\csinflowmergex,\mccmchainpipey);%
 }
 
 \newcommand{\ChemostatSnapInflowBranch}[5]{%
   \pgfmathsetmacro{\csinflowpooly}{#4}%
-  \pgfmathsetmacro{\csinflowabove}{int(\csinflowpooly>\mccpchainpipey)}%
+  \pgfmathsetmacro{\csinflowabove}{int(\csinflowpooly>\mccmchainpipey)}%
   \makeatletter
   \ifnum\csinflowabove=1
     \pgfpointanchor{#2}{south}\pgf@xa=\pgf@x \pgf@ya=\pgf@y
@@ -527,18 +527,18 @@
     \draw[#1, shorten <=\ChemostatSnapRefMetabShorten]
       (#2.south)
       -- (\csinflowedgex,\csinflowedgey)
-      -- (\csinflowedgex,\mccpchainpipey+\ChemostatSnapInflowBranchBend)
-      .. controls (\csinflowedgex,\mccpchainpipey)
-                  and (\csinflowjunction,\mccpchainpipey) ..
-      (\csinflowjunction,\mccpchainpipey);%
+      -- (\csinflowedgex,\mccmchainpipey+\ChemostatSnapInflowBranchBend)
+      .. controls (\csinflowedgex,\mccmchainpipey)
+                  and (\csinflowjunction,\mccmchainpipey) ..
+      (\csinflowjunction,\mccmchainpipey);%
   \else
     \draw[#1, shorten <=\ChemostatSnapRefMetabShorten]
       (#2.north)
       -- (\csinflowedgex,\csinflowedgey)
-      -- (\csinflowedgex,\mccpchainpipey-\ChemostatSnapInflowBranchBend)
-      .. controls (\csinflowedgex,\mccpchainpipey)
-                  and (\csinflowjunction,\mccpchainpipey) ..
-      (\csinflowjunction,\mccpchainpipey);%
+      -- (\csinflowedgex,\mccmchainpipey-\ChemostatSnapInflowBranchBend)
+      .. controls (\csinflowedgex,\mccmchainpipey)
+                  and (\csinflowjunction,\mccmchainpipey) ..
+      (\csinflowjunction,\mccmchainpipey);%
   \fi
 }
 
@@ -547,7 +547,7 @@
   \pgfpointanchor{#2}{center}\pgf@ya=\pgf@y
   \pgfmathsetmacro{\csoutflowpooly}{\pgf@ya/1cm}%
   \makeatother
-  \pgfmathsetmacro{\csoutflowabove}{int(\csoutflowpooly>\mccpchainpipey)}%
+  \pgfmathsetmacro{\csoutflowabove}{int(\csoutflowpooly>\mccmchainpipey)}%
   \makeatletter
   \ifnum\csoutflowabove=1
     \pgfpointanchor{#2}{south}\pgf@xa=\pgf@x \pgf@ya=\pgf@y
@@ -558,7 +558,7 @@
   \pgfmathsetmacro{\csoutflowedgey}{\pgf@ya/1cm}%
   \makeatother
   \pgfmathsetmacro{\csoutflowteex}{min(\csoutflowedgex, \ChemostatSnapOutflowTrunkCap)}%
-  \pgfmathsetmacro{\csoutflowvroom}{abs(\csoutflowedgey-\mccpchainpipey)}%
+  \pgfmathsetmacro{\csoutflowvroom}{abs(\csoutflowedgey-\mccmchainpipey)}%
   \pgfmathsetmacro{\csoutflowbend}{min(\ChemostatSnapOutflowBranchBend, 0.90*\csoutflowvroom-0.01)}%
   \pgfmathsetmacro{\csoutflowbend}{max(0.06, \csoutflowbend)}%
   \pgfmathsetmacro{\csoutflowjunction}{\csoutflowteex+\csoutflowbend}%
@@ -566,17 +566,17 @@
   \ifnum\csoutflowabove=1
     \draw[csoutflowline, #1]
       (#2.south)
-      -- (\csoutflowedgex,\mccpchainpipey+\csoutflowbend)
-      .. controls (\csoutflowedgex,\mccpchainpipey)
-                  and (\csoutflowteex,\mccpchainpipey) ..
-      (\csoutflowjunction,\mccpchainpipey);%
+      -- (\csoutflowedgex,\mccmchainpipey+\csoutflowbend)
+      .. controls (\csoutflowedgex,\mccmchainpipey)
+                  and (\csoutflowteex,\mccmchainpipey) ..
+      (\csoutflowjunction,\mccmchainpipey);%
   \else
     \draw[csoutflowline, #1]
       (#2.north)
-      -- (\csoutflowedgex,\mccpchainpipey-\csoutflowbend)
-      .. controls (\csoutflowedgex,\mccpchainpipey)
-                  and (\csoutflowteex,\mccpchainpipey) ..
-      (\csoutflowjunction,\mccpchainpipey);%
+      -- (\csoutflowedgex,\mccmchainpipey-\csoutflowbend)
+      .. controls (\csoutflowedgex,\mccmchainpipey)
+                  and (\csoutflowteex,\mccmchainpipey) ..
+      (\csoutflowjunction,\mccmchainpipey);%
   \fi
 }
 
@@ -589,10 +589,10 @@
   \makeatother
   \pgfmathsetmacro{\csoutflowmergecxone}{\csoutflowmergex+\ChemostatSnapOutflowMergeTrunkPull}%
   \pgfmathsetmacro{\csoutflowmergecyone}{%
-    \csoutflowmergeendy+\ChemostatSnapOutflowMergeStackPull*(\mccpchainpipey-\csoutflowmergeendy)}%
+    \csoutflowmergeendy+\ChemostatSnapOutflowMergeStackPull*(\mccmchainpipey-\csoutflowmergeendy)}%
   \draw[csoutflowline, #1, shorten >=\ChemostatSnapRefMetabShorten]
-    (\csoutflowmergex,\mccpchainpipey)
-    .. controls (\csoutflowmergecxone,\mccpchainpipey) and (\csoutflowmergeendx,\csoutflowmergecyone) ..
+    (\csoutflowmergex,\mccmchainpipey)
+    .. controls (\csoutflowmergecxone,\mccmchainpipey) and (\csoutflowmergeendx,\csoutflowmergecyone) ..
     (#2.west);%
 }
 
@@ -807,19 +807,19 @@
     \node[csmballMtwo] (csEnM2out) at (1.28,0.36) {};
     \node[csmballMtwo] (csEnM2in) at (-1.28,-0.26) {};
     \node[csmballWaste] (csEnW) at (1.28,-0.26) {};
-    \mccpchaindrawmetabarrowLane{metabEnA}{csEnM1}{csEnOrg}{csEnM2out}{blue!65!black}{yellow!55!black}{u}%
-    \mccpchaindrawmetabarrowLane{metabEnB}{csEnM2in}{csEnOrg}{csEnW}{yellow!55!black}{gray!65!black}{l}%
-    \mccpchainrestackmet{csEnM1}{csmballMone}%
-    \mccpchainrestackmet{csEnM2out}{csmballMtwo}%
-    \mccpchainrestackmet{csEnM2in}{csmballMtwo}%
-    \mccpchainrestackmet{csEnW}{csmballWaste}%
+    \mccmchaindrawmetabarrowLane{metabEnA}{csEnM1}{csEnOrg}{csEnM2out}{blue!65!black}{yellow!55!black}{u}%
+    \mccmchaindrawmetabarrowLane{metabEnB}{csEnM2in}{csEnOrg}{csEnW}{yellow!55!black}{gray!65!black}{l}%
+    \mccmchainrestackmet{csEnM1}{csmballMone}%
+    \mccmchainrestackmet{csEnM2out}{csmballMtwo}%
+    \mccmchainrestackmet{csEnM2in}{csmballMtwo}%
+    \mccmchainrestackmet{csEnW}{csmballWaste}%
     \node[font=\tiny\bfseries, text=blue!70!black, above=2pt of csEnOrg] {Task A};
     \node[font=\tiny\bfseries, text=yellow!55!black, below=2pt of csEnOrg] {Task B};
 }
 \newcommand{\ChemostatSnapEnergyPanel}{%
   \begin{tikzpicture}[baseline=(current bounding box.south), font=\small]
     \ChemostatSnapStyles
-    \colorlet{mccpchainmetabbg}{white}
+    \colorlet{mccmchainmetabbg}{white}
     \useasboundingbox (-2.05,-1.32) rectangle (2.05,0.96);
     \ChemostatSnapEnergyPanelDraw
     \node[font=\scriptsize, align=center] at (0,-1.08) {%
@@ -829,7 +829,7 @@
 \newcommand{\ChemostatSnapEnergyPanelNoEq}{%
   \begin{tikzpicture}[baseline=(current bounding box.south), font=\small]
     \ChemostatSnapStyles
-    \colorlet{mccpchainmetabbg}{white}
+    \colorlet{mccmchainmetabbg}{white}
     \useasboundingbox (-2.05,-0.62) rectangle (2.05,0.96);
     \ChemostatSnapEnergyPanelDraw
   \end{tikzpicture}%
@@ -877,11 +877,11 @@
   \node[csorg] (csPopE) at (\ChemostatSnapPopEx,\ChemostatSnapPopEy) {};%
   \ChemostatSnapPersistPreOutflow
   \pgfmathsetmacro{\csoutflowstackdy}{\ChemostatSnapOutflowStackDy}%
-  \pgfmathsetmacro{\csoutflowystackMtwo}{\mccpchainpipey+2*\csoutflowstackdy}%
-  \pgfmathsetmacro{\csoutflowystackWb}{\mccpchainpipey+\csoutflowstackdy}%
-  \pgfmathsetmacro{\csoutflowystackMone}{\mccpchainpipey}%
-  \pgfmathsetmacro{\csoutflowystackOrg}{\mccpchainpipey-\csoutflowstackdy}%
-  \pgfmathsetmacro{\csoutflowystackWc}{\mccpchainpipey-2*\csoutflowstackdy}%
+  \pgfmathsetmacro{\csoutflowystackMtwo}{\mccmchainpipey+2*\csoutflowstackdy}%
+  \pgfmathsetmacro{\csoutflowystackWb}{\mccmchainpipey+\csoutflowstackdy}%
+  \pgfmathsetmacro{\csoutflowystackMone}{\mccmchainpipey}%
+  \pgfmathsetmacro{\csoutflowystackOrg}{\mccmchainpipey-\csoutflowstackdy}%
+  \pgfmathsetmacro{\csoutflowystackWc}{\mccmchainpipey-2*\csoutflowstackdy}%
   \pgfmathsetmacro{\csoutflowcolx}{\ChemostatSnapOutflowStackX}%
   \node[csmballMtwo] (csOutM2) at (\csoutflowcolx,\csoutflowystackMtwo) {};%
   \node[csmballWaste] (csOutWb) at (\csoutflowcolx,\csoutflowystackWb) {};%
@@ -931,7 +931,7 @@
     \useasboundingbox (\ChemostatSnapNativeXMin, \ChemostatSnapNativeYMin)
       rectangle (\ChemostatSnapNativeXMax, \ChemostatSnapNativeYMax);
     \ChemostatSnapStyles
-    \colorlet{mccpchainmetabbg}{white}
+    \colorlet{mccmchainmetabbg}{white}
     \ChemostatSnapTank
     \def\ChemostatSnapVariant{#2}%
     \ifx\ChemostatSnapVariant\Snap@empty

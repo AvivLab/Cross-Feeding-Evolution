@@ -1,4 +1,4 @@
-# MCCP_HEADLESS_NEUTRAL_FILE_VERSION=1.5.10
+# MCCM_HEADLESS_NEUTRAL_FILE_VERSION=1.5.10
 """
 Headless Neutral Set Comparison (Monte Carlo primary vs neutral batches).
 
@@ -1359,7 +1359,7 @@ def run_from_neutral_comparison_json(
                 _emit(
                     "Note: primary events PNG not written — no primary offload records found "
                     f"(session root or {NEUTRAL_COMPARISON_PARALLEL_SHARD_SUBDIR}/primary/). "
-                    "If multi-node used --skip-offload-merge, sync an updated mccp_light bundle."
+                    "If multi-node used --skip-offload-merge, sync an updated mccm_light bundle."
                 )
             elif _pe_meets + _pe_below == 0:
                 _emit(

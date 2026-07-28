@@ -20,10 +20,10 @@ fi
 mkdir -p "$OUT/figures" "$OUT/supplementary/figures"
 
 echo "== TikZ figures =="
-"$SCRIPTS/build_mccp_chain_figure.sh"
-cp -f "$ROOT/figures/Used/mccp_chain.pdf" "$OUT/figures/mccp_chain.pdf"
-"$SCRIPTS/build_mccp_four_conditions_figure.sh"
-cp -f "$ROOT/figures/Used/mccp_four_conditions.pdf" "$OUT/figures/mccp_four_conditions.pdf"
+"$SCRIPTS/build_mccm_chain_figure.sh"
+cp -f "$ROOT/figures/Used/mccm_chain.pdf" "$OUT/figures/mccm_chain.pdf"
+"$SCRIPTS/build_mccm_four_conditions_figure.sh"
+cp -f "$ROOT/figures/Used/mccm_four_conditions.pdf" "$OUT/figures/mccm_four_conditions.pdf"
 "$SCRIPTS/build_simulation_loop_combined_figure.sh"
 cp -f "$ROOT/figures/Used/simulation_loop_combined.pdf" "$OUT/figures/simulation_loop_combined.pdf"
 

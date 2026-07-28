@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render figures/Used/mccp_chain_tikz.tex -> figures/Used/mccp_chain.pdf (tight standalone crop).
+# Render figures/Used/mccm_four_conditions_tikz.tex -> figures/Used/mccm_four_conditions.pdf
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRAFT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -8,9 +8,9 @@ if [[ -d "$DRAFT_DIR/figures/Used" ]]; then
 else
   FIG_DIR="$DRAFT_DIR/figures"
 fi
-BUILD_DIR="$FIG_DIR/.build_mccp_chain"
-STEM="mccp_chain"
-WRAPPER="$FIG_DIR/mccp_chain_standalone.tex"
+BUILD_DIR="$FIG_DIR/.build_mccm_four_conditions"
+STEM="mccm_four_conditions"
+WRAPPER="$FIG_DIR/mccm_four_conditions_standalone.tex"
 OUT_PDF="$FIG_DIR/${STEM}.pdf"
 
 if [[ ! -f "$WRAPPER" ]]; then
@@ -33,8 +33,8 @@ cp -f "$BUILD_DIR/${STEM}.pdf" "$OUT_PDF"
 
 PDFCROP="${PDFCROP:-pdfcrop}"
 if command -v "$PDFCROP" >/dev/null 2>&1; then
-  tmp="$(mktemp -t mccp_chain_crop.XXXXXX.pdf)"
-  "$PDFCROP" --hires --margins "2 2 2 2" "$OUT_PDF" "$tmp"
+  tmp="$(mktemp -t mccm_four_conditions_crop.XXXXXX.pdf)"
+  "$PDFCROP" --hires --margins "3 10 3 3" "$OUT_PDF" "$tmp"
   mv -f "$tmp" "$OUT_PDF"
 else
   echo "Warning: pdfcrop not found; figure may include extra margins." >&2
